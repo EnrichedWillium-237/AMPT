@@ -5,6 +5,7 @@ process = cms.Process("AMPT")
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
+process.load('Configuration.StandardSequences.Generator_cff')
 
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(50000))
@@ -17,10 +18,27 @@ process.options = cms.untracked.PSet(
     Rethrow = cms.untracked.vstring('ProductNotFound')
 )
 
+# process.source = cms.Source("PoolSource",
+# 		fileNames = cms.untracked.vstring('file:output.root'),
+# 		secondaryFileNames = cms.untracked.vstring()
+# 		)
+# process.source = cms.Source("PoolSource",
+# 		fileNames = cms.untracked.vstring('/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_1.root'),
+# 		)
 process.source = cms.Source("PoolSource",
-		fileNames = cms.untracked.vstring('file:/afs/cern.ch/work/w/wmcbraye/public/Quan/CMSSW_7_5_8_patch7/src/test/testoutput.root'),
-		secondaryFileNames = cms.untracked.vstring()
-		)
+        fileNames = cms.untracked.vstring( *(
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_1.root',
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_10.root',
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_100.root',
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_101.root',
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_102.root',
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_103.root',
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_104.root',
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_106.root',
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_107.root',
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_108.root'
+                ) )
+        )
 
 process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
     splitLevel = cms.untracked.int32(0),
@@ -42,8 +60,12 @@ process.QWEvent = cms.EDProducer("QWGenEventProducer",
 		isPrompt  = cms.untracked.bool(False),
 		Etamin = cms.untracked.double(-5.0),
 		Etamax = cms.untracked.double(5.0),
-		ptMin = cms.untracked.double(.3),
-		ptMax = cms.untracked.double(12.),
+		ptMin = cms.untracked.double(0.3),
+		ptMax = cms.untracked.double(12.0),
+		)
+
+process.QWHepMC = cms.EDProducer('QWHepMCProducer',
+		src = cms.untracked.InputTag('generator')
 		)
 
 process.QWTreeMaker = cms.EDAnalyzer('QWTreeMaker',
@@ -51,15 +73,19 @@ process.QWTreeMaker = cms.EDAnalyzer('QWTreeMaker',
 		vTag = cms.untracked.vstring('phi', 'eta', 'pt', 'charge')
 		)
 
+process.QWHepMCMaker = cms.EDAnalyzer('QWDTreeMaker',
+		src = cms.untracked.InputTag('QWHepMC'),
+		vTag = cms.untracked.vstring('b', 'EP', 'Npart', 'Ncoll')
+		)
+
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string('tree.root')
+    fileName = cms.string('AMPTsample.root')
 )
 
-process.ana = cms.Path(process.QWEvent * process.QWTreeMaker)
-#process.RAWSIMoutput_step = cms.EndPath(process.RAWSIMoutput)
+process.ana = cms.Path(process.GeneInfo * process.QWEvent * process.QWTreeMaker * process.QWHepMC * process.QWHepMCMaker)
+process.RAWSIMoutput_step = cms.EndPath(process.RAWSIMoutput)
 
 process.schedule = cms.Schedule(
     process.ana,
 #    process.RAWSIMoutput_step,
 )
-

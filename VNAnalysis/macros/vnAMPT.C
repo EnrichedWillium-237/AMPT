@@ -87,6 +87,10 @@ TH1D * qABmcnt[3][ncentbins][11];
 TH1D * qACmcnt[3][ncentbins][11];
 TH1D * qBCmcnt[3][ncentbins][11];
 
+TH1D * vnA_eta[ncentbins];
+TH1D * vnB_eta[ncentbins];
+TH1D * vnAB_eta[ncentbins];
+
 TRandom3 * ran;
 TFile * tfin;
 TFile * tfout;
@@ -421,6 +425,10 @@ void ReadTree( bool etaweights, bool ptweights )
         }
     }
 
+    //-- calculate final v1 and propagate errors
+
+    //
+
     string ntag = "";
     if (etaweights) ntag+="_eta_weights";
     if (ptweights) ntag+="_pt_weights";
@@ -428,6 +436,9 @@ void ReadTree( bool etaweights, bool ptweights )
     for (int cbin = 0; cbin<ncentbins; cbin++) {
         TDirectory * tdcent = (TDirectory *) tfout->mkdir(Form("%d_%d",cmin[cbin],cmax[cbin]));
         tdcent->cd();
+        vnA_eta[cbin]->Write();
+        vnB_eta[cbin]->Write();
+        vnAB_eta[cbin]->Write();
         qA[cbin][0]->Write();
         qB[cbin][0]->Write();
         wnA[cbin][0]->Write();
@@ -546,6 +557,9 @@ void vnAMPT() {
                 qBCmcnt[ord-1][cbin][k]->SetDirectory(0);
             }
         }
+        vnA_eta[cbin] = new TH1D(Form("vnA_eta_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        vnB_eta[cbin] = new TH1D(Form("vnB_eta_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        vnAB_eta[cbin] = new TH1D(Form("vnAB_eta_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
     }
 
     phiInput   = new TH1D("phiInput",   "", 100, -3.5, 3.5);
@@ -628,6 +642,13 @@ void vnAMPT() {
         phiPsi2[nep]->Draw("same");
         phiPsi1[nep]->Draw("same");
     }
+    TLegend * legPsi = new TLegend(0.46, 0.22, 0.66, 0.43);
+    SetLegend(legPsi, 18);
+    legPsi->AddEntry(Psi1Psi[0],"HFm","l");
+    legPsi->AddEntry(Psi1Psi[1],"trackm","l");
+    legPsi->AddEntry(Psi1Psi[2],"trackp","l");
+    legPsi->AddEntry(Psi1Psi[3],"HFp","l");
+    legPsi->Draw();
 
 
     TCanvas * cCenttest = new TCanvas("cCenttest","cCenttest",600,550);
