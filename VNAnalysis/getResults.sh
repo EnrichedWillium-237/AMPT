@@ -1,4 +1,4 @@
 #!/bin/sh
 #
-cp ../CMSSW_7_5_8_patch7/src/test/tree.root .
+cp ../CMSSW_7_5_8_patch7/src/test/AMPTsample.root .
 #
