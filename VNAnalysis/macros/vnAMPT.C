@@ -24,11 +24,11 @@ static const int netabins = 12;
 static const double etabins[] = {-2.4, -2.0, -1.6, -1.2, -0.8, -0.4,  0.0,
                      0.4,  0.8,  1.2,  1.6, 2.0,  2.4};
 static const int ncentbins = 11;
-static const int centBins[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70};
-static const double centRefBins[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70};
+static const double centBins[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70};
 static const int ncbins = 14;
 static const int cmin[] = {0,  5, 10, 15, 20, 25, 30, 35, 40, 50, 60,  0, 30,  50};
 static const int cmax[] = {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 30, 50, 100};
+static const double npartBins[] = {420, 355, 305, 260, 221, 186, 156, 132, 102, 67, 40, 23};
 //--                            HF- track- track+ HF+ other
 static const double emin[] = {-5.0, -0.5,  0.0,  3.0, -6.0};
 static const double emax[] = {-3.0,  0.0,  0.5,  5.0,  6.0};
@@ -36,6 +36,8 @@ static const double pmin[] = { 0.3,  0.3,  0.3,  0.3,  0.0};
 static const double pmax[] = {12.0,  3.0,  3.0, 12.0, 12.0};
 static const int numEP = 5;
 const string EPName[] = {"HFm", "trackm", "trackp", "HFp", "other"};
+static const double eminPOI[] = {-2.4, 0.0};
+static const double emaxPOI[] = { 0.0, 2.4};
 const string sideName[] = {"neg", "pos"};
 
 //----------------------------------
@@ -68,6 +70,23 @@ TH1D * Psi1Psi[numEP];
 TH1D * Psi2Psi[numEP];
 TH1D * Psi3Psi[numEP];
 
+TH2D * qA[ncbins];
+TH2D * qB[ncbins];
+TH2D * wnA[ncbins];
+TH2D * wnB[ncbins];
+TH1D * qABp[ncbins];
+TH1D * qACp[ncbins];
+TH1D * qBCp[ncbins];
+TH1D * qABm[ncbins];
+TH1D * qACm[ncbins];
+TH1D * qBCm[ncbins];
+TH1D * qABpcnt[ncbins];
+TH1D * qACpcnt[ncbins];
+TH1D * qBCpcnt[ncbins];
+TH1D * qABmcnt[ncbins];
+TH1D * qACmcnt[ncbins];
+TH1D * qBCmcnt[ncbins];
+
 TFile * tfin;
 TTree * tree0;
 TTree * tree1;
@@ -79,6 +98,9 @@ TLeaf * Lb;
 TLeaf * Lep;
 TLeaf * Lnpart;
 TLeaf * Lncoll;
+TH1D * Npartbins;
+TH1D * centbins;
+int centval;
 
 # include "style.h"
 
@@ -118,24 +140,6 @@ void ReadTree( bool etaweights, bool ptweights )
     tree0->SetBranchAddress("Npart",  &Npart);
     tree0->SetBranchAddress("Ncoll",  &Ncoll);
 
-    phiInput   = new TH1D("phiInput",   "", 100, -3.5, 3.5);
-    etaInput   = new TH1D("etaInput",   "", 100, -6, 6);
-    ptInput    = new TH1D("ptInput",    "", 100, 0, 12);
-    binput     = new TH1D("binput",     "", 100, 0, 30);
-    epInput    = new TH1D("epInput",    "", 100, -3.5, 3.5);
-    npartInput = new TH1D("npartInput", "", 100, 0, 450);
-    ncollInput = new TH1D("ncollInput", "", 100, 0, 2000);
-    sizevsb    = new TH2D("sizevsb",    "", binput->GetNbinsX(), 0, 30, phiInput->GetNbinsX(), 0, 2e4);
-    sizevsb->SetOption("colz");
-    for (int nep = 0; nep<numEP; nep++) {
-        phiPsi1[nep] = new TH1D(Form("phiPsi%s1",EPName[nep].data()), "", 100, -6, 6);
-        phiPsi2[nep] = new TH1D(Form("phiPsi%s2",EPName[nep].data()), "", 100, -3, 3);
-        phiPsi3[nep] = new TH1D(Form("phiPsi%s3",EPName[nep].data()), "", 100, -1.5, 1.5);
-        Psi1Psi[nep] = new TH1D(Form("Psi%s1Psi",EPName[nep].data()), "", 100, -6, 6);
-        Psi2Psi[nep] = new TH1D(Form("Psi%s2Psi",EPName[nep].data()), "", 100, -3, 3);
-        Psi3Psi[nep] = new TH1D(Form("Psi%s3Psi",EPName[nep].data()), "", 100, -1.5, 1.5);
-    }
-
     Double_t q1x[numEP];
     Double_t q1y[numEP];
     Double_t q2x[numEP];
@@ -149,59 +153,36 @@ void ReadTree( bool etaweights, bool ptweights )
     Double_t Psi3[numEP];
     Double_t subcnt[numEP];
 
-    comp Q1nA[2];
-    comp Q1AB[2];
-    comp Q1AC[2];
-    comp Q1BC[2];
-    comp Q2nA[2];
-    comp Q2AB[2];
-    comp Q2AC[2];
-    comp Q2BC[2];
-
-    double w1nA[2];
-    double w1AB[2];
-    double w1AC[2];
-    double w1BC[2];
-    double w2nA[2];
-    double w2AB[2];
-    double w2AC[2];
-    double w2BC[2];
 
     for (int nep = 0; nep<numEP; nep++) {
         subcnt[nep] = 0;
     }
 
-    for (int iside = 0; iside<2; iside++) {
-        Q1nA[iside] = zero;
-        Q1AB[iside] = zero;
-        Q1AC[iside] = zero;
-        Q1BC[iside] = zero;
-        Q2nA[iside] = zero;
-        Q2AB[iside] = zero;
-        Q2AC[iside] = zero;
-        Q2BC[iside] = zero;
-
-        w1nA[iside] = 0;
-        w1AB[iside] = 0;
-        w1AC[iside] = 0;
-        w1BC[iside] = 0;
-        w2nA[iside] = 0;
-        w2AB[iside] = 0;
-        w2AC[iside] = 0;
-        w2BC[iside] = 0;
-    }
 
     // main event loop
     int nevents = tree0->GetEntries();
-    int nextStatus = nevents/10;
+    int nextStatus = 10;
     int ievnt = 0;
     cout << "Entering primary event loop..." <<endl;
     while ( tree0->GetEntry(ievnt++) ) {
+        if (fmod(double(ievnt+1), nevents/10.)==0) {
+            cout << " " << nextStatus << endl;
+            nextStatus+=10;
+        }
+
         binput->Fill( b );
         epInput->Fill( PsiRP );
         npartInput->Fill( Npart );
         ncollInput->Fill( Ncoll );
         sizevsb->Fill( b, phi->size() );
+
+        int bin = 12;
+        for (int j = 0; j<ncentbins; j++) {
+            if (Npart>=npartBins[j+1] && Npart<npartBins[j]) bin = j;
+        }
+
+        cout<<Ncoll<<"\t"<<bin<<endl;
+        centbins->Fill(centBins[bin+1]);
 
         for (int nep = 0; nep<numEP; nep++) {
             q1x[nep] = 0;
@@ -244,21 +225,69 @@ void ReadTree( bool etaweights, bool ptweights )
             Psi2[nep] = TMath::ATan2(q2y[nep],q2x[nep])/2.;
             Psi3[nep] = TMath::ATan2(q3y[nep],q3x[nep])/3.;
 
-            Psi1Psi[nep]->Fill(bounds(1, Psi1[nep]/PsiRP));
-            Psi2Psi[nep]->Fill(bounds(2, Psi2[nep]/PsiRP));
-            Psi3Psi[nep]->Fill(bounds(3, Psi3[nep]/PsiRP));
+            Psi1Psi[nep]->Fill(bounds(1, Psi1[nep] - PsiRP));
+            Psi2Psi[nep]->Fill(bounds(2, Psi2[nep] - PsiRP));
+            Psi3Psi[nep]->Fill(bounds(3, Psi3[nep] - PsiRP));
+            for ( unsigned int i = 0; i<phi->size(); i++) {
+                double phi_ = bounds(1, (*phi)[i]);
+                phiPsi1[nep]->Fill(bounds(1, phi_ - Psi1[nep]));
+                phiPsi2[nep]->Fill(bounds(2, phi_ - Psi2[nep]));
+                phiPsi3[nep]->Fill(bounds(3, phi_ - Psi3[nep]));
+            }
         }
+        //-- calculate vn
 
     }
+
 }
+
 
 void vnAMPT() {
 
     bool etaweights = true;
     bool ptweights = false;
 
-    ReadTree( etaweights, ptweights );
+    double npartBins_[] = {23, 40, 67, 102, 132, 156, 186, 221, 260, 305, 355, 420};
+    Npartbins = new TH1D("Npartbins", "", ncentbins, npartBins_);
+    centbins = new TH1D("centbins", "", ncentbins, centBins);
+    for (int cbin = 0; cbin<ncbins; cbin++) {
+        qA[cbin] = new TH2D(Form("qA_%d_%d",cmin[cbin],cmax[cbin]), "", nptbins, ptbins, netabins, etabins);
+        qB[cbin] = new TH2D(Form("qB_%d_%d",cmin[cbin],cmax[cbin]), "", nptbins, ptbins, netabins, etabins);
+        wnA[cbin] = new TH2D(Form("wnA_%d_%d",cmin[cbin],cmax[cbin]), "", nptbins, ptbins, netabins, etabins);
+        wnB[cbin] = new TH2D(Form("wnB_%d_%d",cmin[cbin],cmax[cbin]), "", nptbins, ptbins, netabins, etabins);
+        qABp[cbin] = new TH1D(Form("qABp_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qACp[cbin] = new TH1D(Form("qACp_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qBCp[cbin] = new TH1D(Form("qBCp_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qABm[cbin] = new TH1D(Form("qABm_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qACm[cbin] = new TH1D(Form("qACm_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qBCm[cbin] = new TH1D(Form("qBCm_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qABpcnt[cbin] = new TH1D(Form("qABpcnt_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qACpcnt[cbin] = new TH1D(Form("qACpcnt_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qBCpcnt[cbin] = new TH1D(Form("qBCpcnt_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qABmcnt[cbin] = new TH1D(Form("qABmcnt_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qACmcnt[cbin] = new TH1D(Form("qACmcnt_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        qBCmcnt[cbin] = new TH1D(Form("qBCmcnt_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+    }
 
+    phiInput   = new TH1D("phiInput",   "", 100, -3.5, 3.5);
+    etaInput   = new TH1D("etaInput",   "", 100, -6, 6);
+    ptInput    = new TH1D("ptInput",    "", 100, 0, 12);
+    binput     = new TH1D("binput",     "", 100, 0, 30);
+    epInput    = new TH1D("epInput",    "", 100, -3.5, 3.5);
+    npartInput = new TH1D("npartInput", "", 100, 0, 450);
+    ncollInput = new TH1D("ncollInput", "", 100, 0, 2000);
+    sizevsb    = new TH2D("sizevsb",    "", binput->GetNbinsX(), 0, 30, phiInput->GetNbinsX(), 0, 2e4);
+    sizevsb->SetOption("colz");
+    for (int nep = 0; nep<numEP; nep++) {
+        phiPsi1[nep] = new TH1D(Form("phiPsi%s1",EPName[nep].data()), "", 100, -3.6, 3.6);
+        phiPsi2[nep] = new TH1D(Form("phiPsi%s2",EPName[nep].data()), "", 100, -3.6, 3.6);
+        phiPsi3[nep] = new TH1D(Form("phiPsi%s3",EPName[nep].data()), "", 100, -3.6, 3.6);
+        Psi1Psi[nep] = new TH1D(Form("Psi%s1Psi",EPName[nep].data()), "", 100, -3.6, 3.6);
+        Psi2Psi[nep] = new TH1D(Form("Psi%s2Psi",EPName[nep].data()), "", 100, -3.6, 3.6);
+        Psi3Psi[nep] = new TH1D(Form("Psi%s3Psi",EPName[nep].data()), "", 100, -3.6, 3.6);
+    }
+
+    ReadTree( etaweights, ptweights );
 
 
     TCanvas * cinputs = new TCanvas("cinputs","cinputs",1200,600);
@@ -289,6 +318,45 @@ void vnAMPT() {
     sizevsb->SetXTitle("b");
     sizevsb->SetYTitle("Multiplicity");
     sizevsb->Draw();
+
+
+    TCanvas * cPsi = new TCanvas("cPsi","cPsi",800,400);
+    cPsi->Divide(2,1);
+    int psicol1[] = {kBlue, kMagenta, kGreen+2, kRed};
+    for (int nep = 0; nep<4; nep++) {
+        Psi1Psi[nep]->SetMarkerColor(psicol1[nep]);
+        Psi2Psi[nep]->SetMarkerColor(psicol1[nep]);
+        phiPsi1[nep]->SetMarkerColor(psicol1[nep]);
+        phiPsi2[nep]->SetMarkerColor(psicol1[nep]);
+        Psi1Psi[nep]->SetLineColor(psicol1[nep]);
+        Psi2Psi[nep]->SetLineColor(psicol1[nep]);
+        phiPsi1[nep]->SetLineColor(psicol1[nep]);
+        phiPsi2[nep]->SetLineColor(psicol1[nep]);
+    }
+    cPsi->cd(1);
+    Psi2Psi[1]->SetXTitle("#Psi_{n} - #Psi_{RP}");
+    Psi2Psi[1]->Draw();
+    for (int nep = 0; nep<4; nep++) {
+        Psi2Psi[nep]->Draw("same");
+        Psi1Psi[nep]->Draw("same");
+    }
+    cPsi->cd(2);
+    phiPsi2[1]->SetXTitle("#phi - #Psi_{n}");
+    phiPsi2[1]->Draw();
+    for (int nep = 0; nep<4; nep++) {
+        phiPsi2[nep]->Draw("same");
+        phiPsi1[nep]->Draw("same");
+    }
+
+
+    TCanvas * cCenttest = new TCanvas("cCenttest","cCenttest",1000,500);
+    cCenttest->Divide(2,1);
+    cCenttest->cd(1);
+    Npartbins->SetXTitle("N_{part}");
+    Npartbins->Draw();
+    cCenttest->cd(2);
+    centbins->SetXTitle("Centrality (%)");
+    centbins->Draw();
 
 
 }
