@@ -7,9 +7,9 @@
 # include "TLegend.h"
 # include "TPaveText.h"
 
-void bug() {
-    cout << " !!! " << __LINE__ << endl;
-}
+// void bug() {
+//     cout << " !!! " << __LINE__ << endl;
+// }
 
 void SetTPaveTxt( TPaveText * txtemplate, int txtsize ) {
     txtemplate->SetFillColor(0);
