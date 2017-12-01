@@ -19,7 +19,7 @@ process.options = cms.untracked.PSet(
 )
 
 # process.source = cms.Source("PoolSource",
-# 		fileNames = cms.untracked.vstring('file:output.root'),
+# 		fileNames = cms.untracked.vstring('file:output.root','),
 # 		secondaryFileNames = cms.untracked.vstring()
 # 		)
 # process.source = cms.Source("PoolSource",
@@ -28,15 +28,7 @@ process.options = cms.untracked.PSet(
 process.source = cms.Source("PoolSource",
         fileNames = cms.untracked.vstring( *(
                 '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_1.root',
-                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_10.root',
-                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_100.root',
-                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_101.root',
-                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_102.root',
-                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_103.root',
-                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_104.root',
-                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_106.root',
-                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_107.root',
-                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_108.root'
+                '/store/user/davidlw/AMPT_PbPb5TeV_Gen/mb_string_batch2/160220_111702/0000/amptDefault_cfi_py_GEN_319.root'
                 ) )
         )
 

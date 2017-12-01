@@ -87,9 +87,19 @@ TH1D * qABmcnt[3][ncentbins][11];
 TH1D * qACmcnt[3][ncentbins][11];
 TH1D * qBCmcnt[3][ncentbins][11];
 
-TH1D * vnA_eta[ncentbins];
-TH1D * vnB_eta[ncentbins];
-TH1D * vnAB_eta[ncentbins];
+TH1D * vnASUB2_eta[ncentbins];
+TH1D * vnBSUB2_eta[ncentbins];
+TH1D * vnABSUB2_eta[ncentbins];
+TH1D * denomASUB2[ncentbins];
+TH1D * denomBSUB2[ncentbins];
+TH1D * denomABSUB2[ncentbins];
+
+TH1D * vnASUB3_eta[ncentbins];
+TH1D * vnBSUB3_eta[ncentbins];
+TH1D * vnABSUB3_eta[ncentbins];
+TH1D * denomASUB3[ncentbins];
+TH1D * denomBSUB3[ncentbins];
+TH1D * denomABSUB3[ncentbins];
 
 TRandom3 * ran;
 TFile * tfin;
@@ -177,7 +187,7 @@ void ReadTree( bool etaweights, bool ptweights )
         }
 
         binput->Fill( b );
-        epInput->Fill( PsiRP );
+        epInput->Fill( bounds(1, PsiRP) );
         npartInput->Fill( Npart );
         ncollInput->Fill( Ncoll );
         sizevsb->Fill( b, phi->size() );
@@ -262,7 +272,7 @@ void ReadTree( bool etaweights, bool ptweights )
                 phiPsi3[nep]->Fill(bounds(3, phi_ - Psi3[nep]));
             }
         }
-        //-- calculate vn
+        //-- calculate Q-vectors
         int HFm = 0;
         int trackm = 1;
         int trackp = 2;
@@ -356,13 +366,9 @@ void ReadTree( bool etaweights, bool ptweights )
             comp Qn1( n1x[ebin], n1y[ebin] );
             comp nA1 = Qn1 * conj(Q1Ap);
             comp nB1 = Qn1 * conj(Q1Am);
-            //qA[centval][0]->Fill(ebin, nA1.real());
             qA[centval][0]->SetBinContent(ebin+1, qA[centval][0]->GetBinContent(ebin+1) + nA1.real());
-            //qB[centval][0]->Fill(ebin, nB1.real());
             qB[centval][0]->SetBinContent(ebin+1, qB[centval][0]->GetBinContent(ebin+1) + nB1.real());
-            //wnA[centval][0]->Fill(ebin, n1cnt[ebin]*q1cnt[HFp]);
             wnA[centval][0]->SetBinContent(ebin+1, wnA[centval][0]->GetBinContent(ebin+1) + n1cnt[ebin]*q1cnt[HFp]);
-            //wnB[centval][0]->Fill(ebin, n1cnt[ebin]*q1cnt[HFm]);
             wnB[centval][0]->SetBinContent(ebin+1, wnB[centval][0]->GetBinContent(ebin+1) + n1cnt[ebin]*q1cnt[HFp]);
 
         }
@@ -414,20 +420,86 @@ void ReadTree( bool etaweights, bool ptweights )
             comp Qn1( n1x[ebin], n1y[ebin] );
             comp nA1 = Qn1 * conj(Q1Ap);
             comp nB1 = Qn1 * conj(Q1Am);
-            //qA[centval][k]->Fill(ebin, nA1.real());
             qA[centval][k]->SetBinContent(ebin+1, qA[centval][k]->GetBinContent(ebin+1) + nA1.real());
-            //qB[centval][k]->Fill(ebin, nB1.real());
             qB[centval][k]->SetBinContent(ebin+1, qB[centval][k]->GetBinContent(ebin+1) + nB1.real());
-            //wnA[centval][k]->Fill(ebin, n1cnt[ebin]*q1cnt[HFp]);
             wnA[centval][k]->SetBinContent(ebin+1, wnA[centval][k]->GetBinContent(ebin+1) + n1cnt[ebin]*q1cnt[HFp]);
-            //wnB[centval][k]->Fill(ebin, n1cnt[ebin]*q1cnt[HFm]);
             wnB[centval][k]->SetBinContent(ebin+1, wnB[centval][k]->GetBinContent(ebin+1) + n1cnt[ebin]*q1cnt[HFp]);
         }
     }
 
     //-- calculate final v1 and propagate errors
+    for (int cbin = 0; cbin<ncentbins; cbin++) {
+        double denAsub2 = qABp[0][cbin][0]->GetBinContent(1) / qABpcnt[0][cbin][0]->GetBinContent(1);
+        denAsub2 = sqrt( fabs(denAsub2) );
+        double denBsub2 = qABm[0][cbin][0]->GetBinContent(1) / qABmcnt[0][cbin][0]->GetBinContent(1);
+        denBsub2 = sqrt( fabs(denBsub2) );
+        double denAsub3 = qABp[0][cbin][0]->GetBinContent(1) / qABpcnt[0][cbin][0]->GetBinContent(1);
+        denAsub3*=(qACp[0][cbin][0]->GetBinContent(1) / qACpcnt[0][cbin][0]->GetBinContent(1));
+        denAsub3/=(qBCp[0][cbin][0]->GetBinContent(1) / qBCpcnt[0][cbin][0]->GetBinContent(1));
+        denAsub3 = sqrt( fabs(denAsub3) );
+        double denBsub3 = qABm[0][cbin][0]->GetBinContent(1) / qABmcnt[0][cbin][0]->GetBinContent(1);
+        denBsub3*=(qACm[0][cbin][0]->GetBinContent(1) / qACmcnt[0][cbin][0]->GetBinContent(1));
+        denBsub3/=(qBCm[0][cbin][0]->GetBinContent(1) / qBCmcnt[0][cbin][0]->GetBinContent(1));
+        denBsub3 = sqrt( fabs(denBsub3) );
 
-    //
+        vnASUB2_eta[cbin] = (TH1D *) qA[cbin][0]->Clone(Form("vnASUB2_eta_%d_%d",cmin[cbin],cmax[cbin]));
+        vnBSUB2_eta[cbin] = (TH1D *) qA[cbin][0]->Clone(Form("vnBSUB2_eta_%d_%d",cmin[cbin],cmax[cbin]));
+        vnASUB2_eta[cbin]->Divide(wnA[cbin][0]);
+        vnBSUB2_eta[cbin]->Divide(wnB[cbin][0]);
+        vnASUB2_eta[cbin]->Scale(1/denAsub2);
+        vnBSUB2_eta[cbin]->Scale(1/denBsub2);
+
+        vnASUB3_eta[cbin] = (TH1D *) qA[cbin][0]->Clone(Form("vnASUB3_eta_%d_%d",cmin[cbin],cmax[cbin]));
+        vnBSUB3_eta[cbin] = (TH1D *) qA[cbin][0]->Clone(Form("vnBSUB3_eta_%d_%d",cmin[cbin],cmax[cbin]));
+        vnASUB3_eta[cbin]->Divide(wnA[cbin][0]);
+        vnBSUB3_eta[cbin]->Divide(wnB[cbin][0]);
+        vnASUB3_eta[cbin]->Scale(1/denAsub3);
+        vnBSUB3_eta[cbin]->Scale(1/denBsub3);
+
+        vnABSUB2_eta[cbin] = (TH1D *) vnASUB2_eta[cbin]->Clone(Form("vnABSUB2_eta_%d_%d",cmin[cbin],cmax[cbin]));
+        vnABSUB2_eta[cbin]->Add(vnABSUB2_eta[cbin]);
+        vnABSUB2_eta[cbin]->Scale(0.5);
+
+        vnABSUB3_eta[cbin] = (TH1D *) vnASUB3_eta[cbin]->Clone(Form("vnABSUB3_eta_%d_%d",cmin[cbin],cmax[cbin]));
+        vnABSUB3_eta[cbin]->Add(vnABSUB3_eta[cbin]);
+        vnABSUB3_eta[cbin]->Scale(0.5);
+
+        denomASUB2[cbin]->SetBinContent(1, denAsub2);
+        denomASUB3[cbin]->SetBinContent(1, denAsub3);
+        denomBSUB2[cbin]->SetBinContent(1, denBsub2);
+        denomBSUB3[cbin]->SetBinContent(1, denBsub3);
+        denomABSUB2[cbin]->SetBinContent(1, 0.5*(denAsub2+denBsub2));
+        denomABSUB3[cbin]->SetBinContent(1, 0.5*(denAsub3+denBsub3));
+
+        TH1D * qAe[10];
+        TH1D * wnAe[10];
+        double qABpe[10] = {0};
+        double qACpe[10] = {0};
+        double qBCpe[10] = {0};
+        double qABpcnte[10] = {0};
+        double qACpcnte[10] = {0};
+        double qBCpcnte[10] = {0};
+        for (int i = 0; i<10; i++) {
+            // qAe[i] = (TH1D *) qA[cbin][i]->Clone(Form("qAe%d%d",cbin,i));
+            // wnAe[i] = (TH1D *) wnA[cbin][i]->Clone(Form("wnAe%d%d",cbin,i));
+            // qABpe[i] = qABp[i]/qABpcnt[i];
+            // qACpe[i] = qACp[i]/qACpcnt[i];
+            // qBCpe[i] = qBCp[i]/qBCpcnt[i];
+        }
+
+        //fudging errors for the moment (fix later)
+        for (int ebin = 1; ebin<=vnASUB2_eta[cbin]->GetNbinsX(); ebin++) {
+            vnASUB2_eta[cbin]->SetBinError(ebin, 0.01);
+            vnASUB3_eta[cbin]->SetBinError(ebin, 0.01);
+            vnBSUB2_eta[cbin]->SetBinError(ebin, 0.01);
+            vnBSUB3_eta[cbin]->SetBinError(ebin, 0.01);
+            vnABSUB2_eta[cbin]->SetBinError(ebin, 0.01);
+            vnABSUB3_eta[cbin]->SetBinError(ebin, 0.01);
+        }
+
+
+
+    }
 
     string ntag = "";
     if (etaweights) ntag+="_eta_weights";
@@ -436,9 +508,18 @@ void ReadTree( bool etaweights, bool ptweights )
     for (int cbin = 0; cbin<ncentbins; cbin++) {
         TDirectory * tdcent = (TDirectory *) tfout->mkdir(Form("%d_%d",cmin[cbin],cmax[cbin]));
         tdcent->cd();
-        vnA_eta[cbin]->Write();
-        vnB_eta[cbin]->Write();
-        vnAB_eta[cbin]->Write();
+        vnASUB2_eta[cbin]->Write();
+        vnBSUB2_eta[cbin]->Write();
+        vnABSUB2_eta[cbin]->Write();
+        vnASUB3_eta[cbin]->Write();
+        vnBSUB3_eta[cbin]->Write();
+        vnABSUB3_eta[cbin]->Write();
+        denomASUB2[cbin]->Write();
+        denomASUB3[cbin]->Write();
+        denomBSUB2[cbin]->Write();
+        denomBSUB3[cbin]->Write();
+        denomABSUB2[cbin]->Write();
+        denomABSUB3[cbin]->Write();
         qA[cbin][0]->Write();
         qB[cbin][0]->Write();
         wnA[cbin][0]->Write();
@@ -499,6 +580,12 @@ void vnAMPT() {
         qB[cbin][0] = new TH1D(Form("qB_%d_%d",cmin[cbin],cmax[cbin]), "", netabins, etabins);
         wnA[cbin][0] = new TH1D(Form("wnA_%d_%d",cmin[cbin],cmax[cbin]), "", netabins, etabins);
         wnB[cbin][0] = new TH1D(Form("wnB_%d_%d",cmin[cbin],cmax[cbin]), "", netabins, etabins);
+        denomASUB2[cbin] = new TH1D(Form("denomASUB2_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        denomASUB3[cbin] = new TH1D(Form("denomASUB3_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        denomBSUB2[cbin] = new TH1D(Form("denomBSUB2_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        denomBSUB3[cbin] = new TH1D(Form("denomBSUB3_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        denomABSUB2[cbin] = new TH1D(Form("denomABSUB2_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+        denomABSUB3[cbin] = new TH1D(Form("denomABSUB3_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
         for (int ord = 1; ord<=3; ord++) {
             qABp[ord-1][cbin][0] = new TH1D(Form("qABp%d_%d_%d",ord,cmin[cbin],cmax[cbin]), "", 1, 0, 1);
             qABp[ord-1][cbin][0]->SetDirectory(0);
@@ -557,9 +644,7 @@ void vnAMPT() {
                 qBCmcnt[ord-1][cbin][k]->SetDirectory(0);
             }
         }
-        vnA_eta[cbin] = new TH1D(Form("vnA_eta_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
-        vnB_eta[cbin] = new TH1D(Form("vnB_eta_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
-        vnAB_eta[cbin] = new TH1D(Form("vnAB_eta_%d_%d",cmin[cbin],cmax[cbin]), "", 1, 0, 1);
+
     }
 
     phiInput   = new TH1D("phiInput",   "", 100, -3.5, 3.5);
@@ -603,10 +688,12 @@ void vnAMPT() {
     cinputs->cd(5);
     epInput->SetXTitle("#Psi_{RP}");
     epInput->Draw();
-    cinputs->cd(6);
+    TPad * padinputs6 = (TPad *) cinputs->cd(6);
+    padinputs6->SetLogy();
     npartInput->SetXTitle("N_{part}");
     npartInput->Draw();
-    cinputs->cd(7);
+    TPad * padinputs7 = (TPad *) cinputs->cd(7);
+    padinputs7->SetLogy();
     ncollInput->SetXTitle("N_{coll}");
     ncollInput->Draw();
     cinputs->cd(8);
