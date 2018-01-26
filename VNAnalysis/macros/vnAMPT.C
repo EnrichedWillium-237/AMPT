@@ -134,9 +134,9 @@ void ReadTree( bool etaweights, bool ptweights )
     TH1::SetDefaultSumw2();
     TH2::SetDefaultSumw2();
 
-    tfin = new TFile("../AMPTsample.root");
+    tfin = new TFile("/rfs/wmcbrayer/AMPT/ampt_string_melting.root");
 
-    cout << "Reading file: ../AMPTsample.root" << endl;
+    cout << "Reading file: /rfs/wmcbrayer/AMPT/ampt_string_melting.root" << endl;
     if (etaweights) cout << "Calculating v1 using eta-dependent weighting" << endl;
     if (ptweights) cout << "Calculating v1 using pT-dependent weighting" << endl;
 
@@ -489,12 +489,12 @@ void ReadTree( bool etaweights, bool ptweights )
 
         //fudging errors for the moment (fix later)
         for (int ebin = 1; ebin<=vnASUB2_eta[cbin]->GetNbinsX(); ebin++) {
-            vnASUB2_eta[cbin]->SetBinError(ebin, 0.01);
-            vnASUB3_eta[cbin]->SetBinError(ebin, 0.01);
-            vnBSUB2_eta[cbin]->SetBinError(ebin, 0.01);
-            vnBSUB3_eta[cbin]->SetBinError(ebin, 0.01);
-            vnABSUB2_eta[cbin]->SetBinError(ebin, 0.01);
-            vnABSUB3_eta[cbin]->SetBinError(ebin, 0.01);
+            vnASUB2_eta[cbin]->SetBinError(ebin, 0.005);
+            vnASUB3_eta[cbin]->SetBinError(ebin, 0.005);
+            vnBSUB2_eta[cbin]->SetBinError(ebin, 0.005);
+            vnBSUB3_eta[cbin]->SetBinError(ebin, 0.005);
+            vnABSUB2_eta[cbin]->SetBinError(ebin, 0.005);
+            vnABSUB3_eta[cbin]->SetBinError(ebin, 0.005);
         }
 
 
@@ -669,6 +669,8 @@ void vnAMPT() {
 
 
     //-- make plots
+    if (!fopen("figures","r")) system("mkdir figures");
+
 
     TCanvas * cinputs = new TCanvas("cinputs","cinputs",1200,600);
     cinputs->Divide(4,2);
@@ -700,6 +702,7 @@ void vnAMPT() {
     sizevsb->SetXTitle("b");
     sizevsb->SetYTitle("Multiplicity");
     sizevsb->Draw();
+    cinputs->Print("figures/AMPT_inputs.png","png");
 
 
     TCanvas * cPsi = new TCanvas("cPsi","cPsi",800,400);
@@ -736,12 +739,69 @@ void vnAMPT() {
     legPsi->AddEntry(Psi1Psi[2],"trackp","l");
     legPsi->AddEntry(Psi1Psi[3],"HFp","l");
     legPsi->Draw();
+    cPsi->Print("figures/AMPT_PsiInputs.png","png");
+
+
+
+    TCanvas * cPsi2 = new TCanvas("cPsi","cPsi",600,550);\
+    cPsi2->cd();
+    phiPsi2[1]->SetXTitle("#phi - #Psi_{n}");
+    phiPsi2[1]->GetYaxis()->SetRangeUser(104e3,122e3);
+    phiPsi2[1]->Draw();
+    for (int nep = 0; nep<4; nep++) {
+        phiPsi2[nep]->Draw("same");
+        phiPsi1[nep]->Draw("same");
+    }
+    TLegend * legPsi2 = new TLegend(0.46, 0.22, 0.66, 0.43);
+    SetLegend(legPsi2, 18);
+    legPsi2->AddEntry(Psi1Psi[0],"HFm","l");
+    legPsi2->AddEntry(Psi1Psi[1],"trackm","l");
+    legPsi2->AddEntry(Psi1Psi[2],"trackp","l");
+    legPsi2->AddEntry(Psi1Psi[3],"HFp","l");
+    legPsi2->Draw();
+    cPsi2->Print("figures/AMPT_PsiInputs_CloseUp.png","png");
+
 
 
     TCanvas * cCenttest = new TCanvas("cCenttest","cCenttest",600,550);
     cCenttest->cd(1);
     centbins->SetXTitle("Centrality (%)");
     centbins->Draw();
+    cCenttest->Print("figures/AMPT_CentInputs.png","png");
 
+
+
+    TFile * tfAMPT = new TFile("AMPTvn_eta_weights.root","read");
+    double v1val[] = {0.00432655, 0.00725706, 0.00738066, 0.00561729, 0.00289737, 0.000831995, -0.00231878, -0.00419271, -0.00595728, -0.00787632, -0.00611822, -0.00222972};
+    double v1valErr[] = {0.000165429, 0.000156711, 0.000159744, 0.000141924, 0.000128058, 0.000122474, 0.000185045, 0.000131467, 0.000130558, 0.00013969, 0.000155304, 0.00026824};
+    TH1D * hv1data = new TH1D("hv1data", "", netabins, etabins);
+    for (int ebin = 0; ebin<netabins; ebin++) {
+        hv1data->SetBinContent(ebin+1, v1val[ebin]);
+        hv1data->SetBinError(ebin+1, v1valErr[ebin]);
+    }
+    hv1data->SetMarkerColor(kBlue);
+    hv1data->SetLineColor(kBlue);
+    hv1data->SetMarkerStyle(21);
+    hv1data->SetMarkerSize(1.2);
+    //TFile * tftmp = new TFile("AMPTvn_eta_weights.root");
+    TH1D * hv1ampt = (TH1D *) tfout->Get("0_5/vnASUB2_eta_0_5");
+    TCanvas * camptdata = new TCanvas("camptdata","camptdata",600,550);
+    camptdata->cd();
+    hv1ampt->SetFillColor(kOrange+7);
+    hv1ampt->SetMarkerSize(1.2);
+    hv1ampt->SetMarkerColor(kOrange+7);
+    hv1ampt->SetLineColor(kOrange+7);
+    hv1ampt->GetYaxis()->SetRangeUser(-0.03, 0.03);
+    hv1ampt->SetXTitle("#eta");
+    hv1ampt->SetXTitle("v_{1}^{odd}");
+    hv1ampt->Draw();
+    hv1data->Draw("same");
+    TLegend * legamptdata= new TLegend(0.64, 0.75, 0.83, 0.90);
+    SetLegend(legamptdata, 18);
+    legamptdata->SetHeader("30-50%");
+    legamptdata->AddEntry(hv1data,"#bf{CMS} #it{Preliminary}","p");
+    legamptdata->AddEntry(hv1ampt,"AMPT","p");
+    legamptdata->Draw();
+    camptdata->Print("figures/camptdata.png","png");
 
 }
