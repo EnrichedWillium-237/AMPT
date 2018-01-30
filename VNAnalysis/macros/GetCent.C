@@ -18,12 +18,9 @@
 
 using namespace std;
 
-# include "../HiEvtPlaneList.h"
-
 static const int ncentbins = 13;
 static const int cminCENT[] = {0,  5, 10, 15, 20, 25, 30, 35, 40, 50, 60,  0, 20,  60};
 static const int cmaxCENT[] = {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 20, 60, 100};
-string ctag[] = {"0_5", "5_10", "10_15", "15_20", "20_25", "25_30", "30_35", "35_40", "40_50", "50_60", "60_70", "0_20", "20_60"}
 static const int nptbins = 18;
 static const double ptbins[] = {0.30,  0.40,  0.50,  0.60,  0.80,  1.00,  1.25,  1.50,  2.00,  2.50,  3.00,
     3.50,  4.00,  5.00,  6.00,  7.00,  8.00,  10.00,  12.00};
@@ -33,10 +30,6 @@ static const double etabins[] = {-2.4, -2.0, -1.6, -1.2, -0.8, -0.4,  0.0,  0.4,
 //----------------------------------
 // Tree variables
 //
-vector<double> *phi = 0;
-vector<double> *eta = 0;
-vector<double> *pt = 0;
-vector<double> *charge = 0;
 double b;
 double PsiRP;
 double Npart;
@@ -44,14 +37,10 @@ double Ncoll;
 //----------------------------------
 
 //-- MC inputs
-TH1D * phiIN;
-TH1D * etaIN;
-TH1D * ptIN;
 TH1D * bIN;
 TH1D * epIN;
 TH1D * npartIN;
 TH1D * ncollIN;
-TH2D * sizevsb;
 
 TH1D * centbins;
 
@@ -77,15 +66,11 @@ void GetCent()
     TH1::SetDefaultSumw2();
     TH2::SetDefaultSumw2();
 
-    phiIN   = new TH1D("phiIN",   "", 100, -3.5, 3.5);
-    etaIN   = new TH1D("etaIN",   "", 100, -6, 6);
-    ptIN    = new TH1D("ptIN",    "", 100, 0, 12);
     bIN     = new TH1D("bIN",     "", 200, 0, 24);
     epIN    = new TH1D("epIN",    "", 100, -3.5, 3.5);
     npartIN = new TH1D("npartIN", "", 100, 0, 450);
     ncollIN = new TH1D("ncollIN", "", 100, 0, 2000);
-    sizevsb = new TH2D("sizevsb", "", bIN->GetNbinsX(), 0, 30, phiIN->GetNbinsX(), 0, 2e4);
-    sizevsb->SetOption("colz");
+    bIN->SetXTitle("b (fm)");
 
     fin = new TFile("../AMPTsample.root");
     cout << "Reading file: ../AMPTsample.root" << endl;
@@ -95,10 +80,6 @@ void GetCent()
     tree1->SetMakeClass(1);
     tree0->AddFriend(tree1);
 
-    tree0->SetBranchAddress("phi",    &phi);
-    tree0->SetBranchAddress("eta",    &eta);
-    tree0->SetBranchAddress("pt",     &pt);
-    tree0->SetBranchAddress("charge", &charge);
     tree0->SetBranchAddress("b",      &b);
     tree0->SetBranchAddress("EP",     &PsiRP);
     tree0->SetBranchAddress("Npart",  &Npart);
@@ -125,24 +106,19 @@ void GetCent()
             cout << "\tElapse time: " << Form("%3.2f",elapse0) << " seconds";
             cout << "\tEstimated total run time: " << Form("%3.2f",elapse1*20./60./60.) << " hours" << endl;
         }
-
         bIN->Fill( b );
         epIN->Fill( bounds(1, PsiRP) );
         npartIN->Fill( Npart );
         ncollIN->Fill( Ncoll );
-        sizevsb->Fill( b, phi->size() );
 
     }
 
     // calculate percent centrality from impact parameter
-    centbins = new TH1D("centbins","centbins",ncentbins,centbins);
-    centbins->SetXTitle("Centrality (%%)");
-    centbins->SetYTitle("Minimum b (fm)");
 
+    double bminCent[ncentbins] = {0};
     double totInt = bIN->Integral(0,200);
     double bmin = 0;
     double bmax = 0.12;
-    cout << "Total integral from 0 to 24 fm: " << totInt << endl;
     int cbin = 0;
     while (bmax < 24) {
         if (bmax>=24) continue;
@@ -153,13 +129,22 @@ void GetCent()
         double subPerInt = 100*subInt/totInt;
         //cout<<"b: "<<bmin<<" - "<<bmax<<"\tbinlow: "<<binlow<<"\tbinhigh: "<<binhigh<<"\tsubInt: "<<subInt<<"\tsubPerInt: "<<subPerInt<<"\tpercntInt: "<<percntInt<<"\tcent: "<<cbin<<"\t"<<cminCENT[cbin]<<" - "<<cmaxCENT[cbin]<<endl;
         if (subPerInt>((double)cmaxCENT[cbin]-cminCENT[cbin])) {
-            centbins->SetBinContent(cbin, bmin);
-            centbins->SetBinError(cbin, 0.12);
+            bminCent[cbin] = bmin;
             bmin = bmax+0.001;
             cbin++;
         }
         bmax+=0.12-0.001;
     }
+    centbins = new TH1D("centbins", "centbins", ncentbins, 0, 120);
+    centbins->SetYTitle("Minimum b (fm)");
+    const char * cname[ncentbins] = {"0_5%", "5_10%", "10_15%", "15_20%", "20_25%", "25_30%", "30_35%", "35_40%", "40_50%", "50_60%", "60_70%", "0_20%", "20_60%"};
+    for (int i = 0; i<ncentbins; i++) {
+        centbins->Fill(cname[i],bminCent[i]);
+        centbins->SetBinError(i+1,0.12);
+    }
+    centbins->SetTitle("");
+    centbins->SetStats(kFALSE);
+    centbins->LabelsDeflate();
 
 
     TCanvas * c0 = new TCanvas("c0","c0",600,550);
