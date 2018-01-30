@@ -23,6 +23,7 @@ using namespace std;
 static const int ncentbins = 13;
 static const int cminCENT[] = {0,  5, 10, 15, 20, 25, 30, 35, 40, 50, 60,  0, 20,  60};
 static const int cmaxCENT[] = {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 20, 60, 100};
+string ctag[] = {"0_5", "5_10", "10_15", "15_20", "20_25", "25_30", "30_35", "35_40", "40_50", "50_60", "60_70", "0_20", "20_60"}
 static const int nptbins = 18;
 static const double ptbins[] = {0.30,  0.40,  0.50,  0.60,  0.80,  1.00,  1.25,  1.50,  2.00,  2.50,  3.00,
     3.50,  4.00,  5.00,  6.00,  7.00,  8.00,  10.00,  12.00};
@@ -51,6 +52,8 @@ TH1D * epIN;
 TH1D * npartIN;
 TH1D * ncollIN;
 TH2D * sizevsb;
+
+TH1D * centbins;
 
 TFile * fin;
 TFile * fout;
@@ -131,24 +134,41 @@ void GetCent()
 
     }
 
-    // calculate percent centrality
-    double totInt = bIN->Integral(0,bIN->FindBin(23.88));
-    double binlow = 0;
-    double binhigh = 0.12;
+    // calculate percent centrality from impact parameter
+    centbins = new TH1D("centbins","centbins",ncentbins,centbins);
+    centbins->SetXTitle("Centrality (%%)");
+    centbins->SetYTitle("Minimum b (fm)");
+
+    double totInt = bIN->Integral(0,200);
+    double bmin = 0;
+    double bmax = 0.12;
     cout << "Total integral from 0 to 24 fm: " << totInt << endl;
     int cbin = 0;
-    while (binhigh < 24) {
-        if (binhigh>=24) continue;
-        binhigh+=0.12;
-        cout<<binhigh<<endl;
+    while (bmax < 24) {
+        if (bmax>=24) continue;
+        double binlow = bIN->FindBin(bmin+0.001);
+        double binhigh = bIN->FindBin(bmax-0.001);
+        double percntInt = 0.01*(double)(cmaxCENT[cbin]-cminCENT[cbin])*totInt;
+        double subInt = bIN->Integral(binlow,binhigh);
+        double subPerInt = 100*subInt/totInt;
+        //cout<<"b: "<<bmin<<" - "<<bmax<<"\tbinlow: "<<binlow<<"\tbinhigh: "<<binhigh<<"\tsubInt: "<<subInt<<"\tsubPerInt: "<<subPerInt<<"\tpercntInt: "<<percntInt<<"\tcent: "<<cbin<<"\t"<<cminCENT[cbin]<<" - "<<cmaxCENT[cbin]<<endl;
+        if (subPerInt>((double)cmaxCENT[cbin]-cminCENT[cbin])) {
+            centbins->SetBinContent(cbin, bmin);
+            centbins->SetBinError(cbin, 0.12);
+            bmin = bmax+0.001;
+            cbin++;
+        }
+        bmax+=0.12-0.001;
     }
 
 
     TCanvas * c0 = new TCanvas("c0","c0",600,550);
     c0->cd();
     bIN->Draw();
-    //cout<<bIN->Integral(2,3)<<endl;
 
+    TCanvas * c1 = new TCanvas("c1","c1",600,550);
+    c1->cd();
+    centbins->Draw();
 
 
     if (!fopen("hists","r")) system("mkdir hists");
@@ -156,8 +176,7 @@ void GetCent()
     fout = new TFile("hists/Cent.root","recreate");
     fout->cd();
     bIN->Write();
-
-
+    centbins->Write();
     fout->Close();
 
 }
