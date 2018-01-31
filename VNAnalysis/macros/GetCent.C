@@ -147,6 +147,7 @@ void GetCent()
     h0 = new TH1D("lowEdge", "lowEdge", NCbins, bminCent);
     for (int i = 0; i<h0->GetNbinsX(); i++) {
         h0->SetBinContent(i+1, centbins[i]);
+        h0->SetBinError(i+1, 0.5);
     }
     h0->SetXTitle("Minimum b (fm)");
     h0->SetYTitle("Centrality (%)");
