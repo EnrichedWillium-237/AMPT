@@ -44,6 +44,7 @@ TH1D * npartIN;
 TH1D * ncollIN;
 
 TH1D * hcent;
+TH1D * h0;
 
 TFile * fin;
 TFile * fout;
@@ -143,6 +144,13 @@ void GetCent()
     hcent->SetXTitle("Centrality (%)");
     hcent->GetYaxis()->SetRangeUser(0, 18);
 
+    h0 = new TH1D("lowEdge", "lowEdge", NCbins, bminCent);
+    for (int i = 0; i<h0->GetNbinsX(); i++) {
+        h0->SetBinContent(i+1, centbins[i]);
+    }
+    h0->SetXTitle("Minimum b (fm)");
+    h0->SetYTitle("Centrality (%)");
+
 
     TCanvas * c0 = new TCanvas("c0","c0",600,550);
     c0->cd();
@@ -152,6 +160,8 @@ void GetCent()
     c1->cd();
     hcent->Draw();
 
+    TCanvas * c2 = new TCanvas("c2","c2",600,550);
+    h0->Draw();
 
     if (!fopen("hists","r")) system("mkdir hists");
 
@@ -159,6 +169,7 @@ void GetCent()
     fout->cd();
     bIN->Write();
     hcent->Write();
+    h0->Write();
     fout->Close();
 
 }

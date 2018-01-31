@@ -18,9 +18,11 @@
 
 using namespace std;
 
-static const int ncentbins = 13;
+static const int ncentbins = 14;
 static const int cminCENT[] = {0,  5, 10, 15, 20, 25, 30, 35, 40, 50, 60,  0, 20,  60};
 static const int cmaxCENT[] = {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 20, 60, 100};
+static const int NCbins = 14;
+static const double centbins[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 100};
 static const int nptbins = 18;
 static const double ptbins[] = {0.30,  0.40,  0.50,  0.60,  0.80,  1.00,  1.25,  1.50,  2.00,  2.50,  3.00,
     3.50,  4.00,  5.00,  6.00,  7.00,  8.00,  10.00,  12.00};
@@ -50,9 +52,8 @@ TH1D * npartIN;
 TH1D * ncollIN;
 TH2D * sizevsb;
 
+TH1D * hcent;
 double ccutlow[ncentbins];
-double ccuthigh[ncentbins];
-TH1D * centbins;
 TH2D * v1true[ncentbins];
 TH2D * v2true[ncentbins];
 TH2D * qcnt[ncentbins];
@@ -95,14 +96,15 @@ void GetVN()
         qcnt[cbin] = (TH2D *) v1true[cbin]->Clone(Form("qcnt_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
     }
 
-    cout << "Retrieving centrality values... " <<endl;
-    fcent = new TFile("hists/Cent.root","read");
-    centbins = (TH1D *) fcent->Get("centbins");
-    for (int cbin = 0; cbin<ncentbins; cbin++) {
-        ccutlow[cbin] = centbins->GetBinContent(cbin+1);
-        ccuthigh[cbin] = centbins->GetBinContent(cbin+2);
-    }
+    Double_t c1[netabins][nptbins][NCbins] = {0};
+    Double_t c2[netabins][nptbins][NCbins] = {0};
 
+    cout << "Retrieving centralities... " << endl;
+    fcent = new TFile("hists/Cent.root","read");
+    hcent = (TH1D *) fcent->Get("lowEdge");
+    for (int i = 0; i<hcent->GetNbinsX(); i++) {
+        ccutlow[i] = hcent->GetBinContent(i+1);
+    }
 
     fin = new TFile("../AMPTsample.root");
     cout << "Reading file: ../AMPTsample.root" << endl;
@@ -149,6 +151,8 @@ void GetVN()
         npartIN->Fill( Npart );
         ncollIN->Fill( Ncoll );
         sizevsb->Fill( b, phi->size() );
+        int cbin = hcent->GetXaxis()->FindBin(b);
+        cout<<"b: "<<b<<"\tcbin: "<<cbin<<endl;
         for ( unsigned int i = 0; i<phi->size(); i++ ) {
             double phi_ = bounds(1, (*phi)[i]);
             double eta_ = (*eta)[i];
@@ -156,6 +160,9 @@ void GetVN()
             phiIN->Fill( phi_ );
             etaIN->Fill( eta_ );
             ptIN->Fill( pt_ );
+
+            int ebin = v1true[0]->GetYaxis()->FindBin(eta_);
+            int pbin = v1true[0]->GetXaxis()->FindBin(pt_);
         }
     }
 
@@ -169,12 +176,7 @@ void GetVN()
     npartIN->Write();
     ncollIN->Write();
     sizevsb->Write();
-    centbins->Write();
-
-
-    TCanvas * c0 = new TCanvas("c0","c0",600,550);
-    c0->cd();
-    centbins->Draw();
+    hcent->Write();
 
 
     TCanvas * cinputs = new TCanvas("cinputs","cinputs",1200,600);
