@@ -54,8 +54,10 @@ TH2D * sizevsb;
 
 TH1D * hcent;
 double ccutlow[ncentbins];
-TH2D * v1true[ncentbins];
-TH2D * v2true[ncentbins];
+TH2D * v1true2D[ncentbins];
+TH2D * v2true2D[ncentbins];
+TH2D * v1raw2D[ncentbins];
+TH2D * v2raw2D[ncentbins];
 TH2D * qcnt[ncentbins];
 
 TFile * fin;
@@ -88,16 +90,15 @@ void GetVN()
     sizevsb = new TH2D("sizevsb", "", bIN->GetNbinsX(), 0, 24, phiIN->GetNbinsX(), 0, 2e4);
     sizevsb->SetOption("colz");
     for (int cbin = 0; cbin<ncentbins; cbin++) {
-        v1true[cbin] = new TH2D(Form("v1true_%d_%d",cminCENT[cbin],cmaxCENT[cbin]), "", nptbins, ptbins, netabins, etabins);
-        v1true[cbin]->SetXTitle("p_{T} (GeV/c)");
-        v1true[cbin]->SetYTitle(Form("#eta (%d-%d%%)",cminCENT[cbin],cmaxCENT[cbin]));
-        v1true[cbin]->SetOption("colz");
-        v2true[cbin] = (TH2D *) v1true[cbin]->Clone(Form("v2true_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
-        qcnt[cbin] = (TH2D *) v1true[cbin]->Clone(Form("qcnt_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
+        v1true2D[cbin] = new TH2D(Form("v1true_%d_%d",cminCENT[cbin],cmaxCENT[cbin]), "", nptbins, ptbins, netabins, etabins);
+        v1true2D[cbin]->SetXTitle("p_{T} (GeV/c)");
+        v1true2D[cbin]->SetYTitle(Form("#eta (%d-%d%%)",cminCENT[cbin],cmaxCENT[cbin]));
+        v1true2D[cbin]->SetOption("colz");
+        v2true2D[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("v2true_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
+        v1raw2D[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("v1raw_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
+        v2raw2D[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("v2raw_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
+        qcnt[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("qcnt_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
     }
-
-    Double_t c1[netabins][nptbins][NCbins] = {0};
-    Double_t c2[netabins][nptbins][NCbins] = {0};
 
     cout << "Retrieving centralities... " << endl;
     fcent = new TFile("hists/Cent.root","read");
@@ -106,8 +107,10 @@ void GetVN()
         ccutlow[i] = hcent->GetBinContent(i+1);
     }
 
-    fin = new TFile("../AMPTsample.root");
-    cout << "Reading file: ../AMPTsample.root" << endl;
+    // fin = new TFile("../AMPTsample.root");
+    // cout << "Reading file: ../AMPTsample.root" << endl;
+    fin = new TFile("/rfs/wmcbrayer/AMPT/ampt_string_melting.root");
+    cout << "Reading file: /rfs/wmcbrayer/AMPT/ampt_string_melting.root" << endl;
     tree0 = (TTree *) fin->Get("QWTreeMaker/trV");
     tree0->SetMakeClass(1);
     tree1 = (TTree *) fin->Get("QWHepMCMaker/trV");
@@ -123,8 +126,13 @@ void GetVN()
     tree0->SetBranchAddress("Npart",  &Npart);
     tree0->SetBranchAddress("Ncoll",  &Ncoll);
 
+    Double_t c1[NCbins][nptbins][netabins] = {0};
+    Double_t c12[NCbins][nptbins][netabins] = {0};
+    Double_t c2[NCbins][nptbins][netabins] = {0};
+    Double_t c22[NCbins][nptbins][netabins] = {0};
+    Double_t cnt[NCbins][nptbins][netabins] = {0};
+
     // main event loop
-    int cbin = -1;
     int nevents = tree0->GetEntries();
     int nextStatus = 5;
     int ievnt = 0;
@@ -133,6 +141,10 @@ void GetVN()
     sw0->Start();
     cout << "Entering primary event loop..." <<endl;
     while ( tree0->GetEntry(ievnt++) ) {
+        //
+        nevents = 1e6;
+        if (ievnt>=nevents) continue;
+        //
         if (fmod(double(ievnt+1), nevents/20.)==0) {
             cout << " " << nextStatus;
             nextStatus+=5;
@@ -151,8 +163,9 @@ void GetVN()
         npartIN->Fill( Npart );
         ncollIN->Fill( Ncoll );
         sizevsb->Fill( b, phi->size() );
-        int cbin = hcent->GetXaxis()->FindBin(b);
-        cout<<"b: "<<b<<"\tcbin: "<<cbin<<endl;
+        int cbin = hcent->GetXaxis()->FindBin(b)-1;
+        if (cbin>=NCbins) continue;
+        // cout<<"b: "<<b<<"\tcbin: "<<cbin<<endl;
         for ( unsigned int i = 0; i<phi->size(); i++ ) {
             double phi_ = bounds(1, (*phi)[i]);
             double eta_ = (*eta)[i];
@@ -161,9 +174,45 @@ void GetVN()
             etaIN->Fill( eta_ );
             ptIN->Fill( pt_ );
 
-            int ebin = v1true[0]->GetYaxis()->FindBin(eta_);
-            int pbin = v1true[0]->GetXaxis()->FindBin(pt_);
+            int ebin = v1true2D[0]->GetYaxis()->FindBin(eta_)-1;
+            int pbin = v1true2D[0]->GetXaxis()->FindBin(pt_)-1;
+            if (ebin>v1true2D[0]->GetNbinsY() || pbin>v1true2D[0]->GetNbinsX()) continue;
+            c1[cbin][pbin][ebin] += TMath::Cos(phi_ - PsiRP);
+            c12[cbin][pbin][ebin] += pow(TMath::Cos(phi_ - PsiRP),2);
+            c2[cbin][pbin][ebin] += TMath::Cos(2*(phi_ - PsiRP));
+            c22[cbin][pbin][ebin] += pow(TMath::Cos(2*(phi_ - PsiRP)),2);
+            cnt[cbin][pbin][ebin] += 1.;
         }
+    }
+
+    for (int cbin = 0; cbin<hcent->GetNbinsX(); cbin++) {
+        for (int pbin = 0; pbin<nptbins; pbin++) {
+            for (int ebin = 0; ebin<netabins; ebin++) {
+                double mult = cnt[cbin][pbin][ebin];
+                double nc1 = c1[cbin][pbin][ebin]/mult;
+                double nc2 = c2[cbin][pbin][ebin]/mult;
+
+                double muc1 = c1[cbin][pbin][ebin]/mult;
+                double varc1 = c12[cbin][pbin][ebin]/mult - pow(muc1,2);
+                double sigc1 = sqrt( varc1/mult );
+                double errc1 = 0.5*nc1*sigc1/muc1;
+
+                double muc2 = c2[cbin][pbin][ebin]/mult;
+                double varc2 = c22[cbin][pbin][ebin]/mult - pow(muc2,2);
+                double sigc2 = sqrt( varc1/mult );
+                double errc2 = 0.5*nc2*sigc2/muc2;
+
+                v1true2D[cbin]->SetBinContent(pbin+1, ebin+1, nc1);
+                v1true2D[cbin]->SetBinError(pbin+1, ebin+1, errc1);
+                v2true2D[cbin]->SetBinContent(pbin+1, ebin+1, nc2);
+                v2true2D[cbin]->SetBinError(pbin+1, ebin+1, errc2);
+                v1raw2D[cbin]->SetBinContent(pbin+1, ebin+1, c1[cbin][pbin][ebin]);
+                v2raw2D[cbin]->SetBinContent(pbin+1, ebin+1, c2[cbin][pbin][ebin]);
+                qcnt[cbin]->SetBinContent(pbin+1, ebin+1, mult);
+            }
+        }
+        v1raw2D[cbin]->Divide(qcnt[cbin]);
+        v2raw2D[cbin]->Divide(qcnt[cbin]);
     }
 
     fout = new TFile("hists/amptVN.root","recreate");
@@ -177,6 +226,15 @@ void GetVN()
     ncollIN->Write();
     sizevsb->Write();
     hcent->Write();
+    for (int cbin = 0; cbin<NCbins; cbin++) {
+        TDirectory * tdcent = (TDirectory *) fout->mkdir(Form("%d_%d",(int)centbins[cbin],(int)centbins[cbin+1]));
+        tdcent->cd();
+        v1true2D[cbin]->Write();
+        v2true2D[cbin]->Write();
+        v1raw2D[cbin]->Write();
+        v2raw2D[cbin]->Write();
+        qcnt[cbin]->Write();
+    }
 
 
     TCanvas * cinputs = new TCanvas("cinputs","cinputs",1200,600);
@@ -212,5 +270,7 @@ void GetVN()
     cinputs->Print("figures/AMPT_inputs.png","png");
     fout->cd(); cinputs->Write();
 
+
+    //fout->Close();
 
 }
