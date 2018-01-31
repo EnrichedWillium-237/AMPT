@@ -75,6 +75,8 @@ void GetCent()
 
     fin = new TFile("../AMPTsample.root");
     cout << "Reading file: ../AMPTsample.root" << endl;
+    // fin = new TFile("/rfs/wmcbrayer/AMPT/ampt_string_melting.root");
+    // cout << "Reading file: /rfs/wmcbrayer/AMPT/ampt_string_melting.root" << endl;
     tree0 = (TTree *) fin->Get("QWTreeMaker/trV");
     tree0->SetMakeClass(1);
     tree1 = (TTree *) fin->Get("QWHepMCMaker/trV");
@@ -88,23 +90,25 @@ void GetCent()
     // main event loop
     int nevents = tree0->GetEntries();
     int nextStatus = 5;
+    double clck = 0;
     int ievnt = 0;
-    TStopwatch * sw0 = new TStopwatch();
-    TStopwatch * sw1 = new TStopwatch();
-    sw0->Start();
+    TStopwatch * sw = new TStopwatch();
+    sw->Start();
     cout << "Entering primary event loop..." <<endl;
     while ( tree0->GetEntry(ievnt++) ) {
+        //
+        // nevents = 1e6;
+        if (ievnt>=nevents) continue;
+        //
         if (fmod(double(ievnt+1), nevents/20.)==0) {
             cout << " " << nextStatus;
             nextStatus+=5;
 
-            sw1->Start();
-            sw0->Continue();
-            sw1->Continue();
-            double elapse0 = sw0->RealTime();
-            double elapse1 = sw1->RealTime();
+            sw->Continue();
+            double elapse0 = sw->RealTime();
+            if (nextStatus == 5) clck = elapse0;
             cout << "\tElapse time: " << Form("%3.2f",elapse0) << " seconds";
-            cout << "\tEstimated total run time: " << Form("%3.2f",elapse1*20./60./60.) << " hours" << endl;
+            cout << "\tEstimated total run time: " << Form("%3.2f",clck*20./60./60.) << " hours" << endl;
         }
         bIN->Fill( b );
         npartIN->Fill( Npart );
