@@ -50,14 +50,12 @@ TH1D * bIN;
 TH1D * epIN;
 TH1D * npartIN;
 TH1D * ncollIN;
-TH2D * sizevsb;
+TH2D * multvsb;
 
 TH1D * hcent;
 double ccutlow[NCbins];
 TH2D * v1true2D[NCbins];
 TH2D * v2true2D[NCbins];
-TH2D * v1raw2D[NCbins];
-TH2D * v2raw2D[NCbins];
 TH2D * qcnt[NCbins];
 
 TFile * fin;
@@ -87,20 +85,18 @@ void GetVN()
     epIN    = new TH1D("epIN",    "", 100, -3.5, 3.5);
     npartIN = new TH1D("npartIN", "", 100, 0, 450);
     ncollIN = new TH1D("ncollIN", "", 100, 0, 2000);
-    sizevsb = new TH2D("sizevsb", "", bIN->GetNbinsX(), 0, 24, phiIN->GetNbinsX(), 0, 2e4);
-    sizevsb->SetOption("colz");
+    multvsb = new TH2D("multvsb", "", bIN->GetNbinsX(), 0, 24, phiIN->GetNbinsX(), 0, 2e4);
+    multvsb->SetOption("colz");
     for (int cbin = 0; cbin<ncentbins; cbin++) {
         v1true2D[cbin] = new TH2D(Form("v1true_%d_%d",cminCENT[cbin],cmaxCENT[cbin]), "", nptbins, ptbins, netabins, etabins);
         v1true2D[cbin]->SetXTitle("p_{T} (GeV/c)");
         v1true2D[cbin]->SetYTitle(Form("#eta (%d-%d%%)",cminCENT[cbin],cmaxCENT[cbin]));
         v1true2D[cbin]->SetOption("colz");
         v2true2D[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("v2true_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
-        v1raw2D[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("v1raw_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
-        v2raw2D[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("v2raw_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
         qcnt[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("qcnt_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
     }
 
-    cout << "Retrieving centralities... " << endl;
+    cout << "Retrieving centrality values... " << endl;
     fcent = new TFile("hists/Cent.root","read");
     hcent = (TH1D *) fcent->Get("lowEdge");
     for (int i = 0; i<hcent->GetNbinsX(); i++) {
@@ -133,7 +129,8 @@ void GetVN()
     Double_t cnt[NCbins][nptbins][netabins] = {0};
 
     // main event loop
-    int nevents = tree0->GetEntries();
+    int nevents = tree1->GetEntries();
+    // int nevents = 1e6;
     int nextStatus = 5;
     double tottime = 0;
     int ievnt = 0;
@@ -142,10 +139,7 @@ void GetVN()
     cout << nevents << " events to be processed " << endl;
     cout << "Entering primary event loop..." << endl;
     while ( tree0->GetEntry(ievnt++) ) {
-        //
-        // nevents = 1e6;
         if (ievnt>=nevents) break;
-        //
         if (fmod(double(ievnt+1), nevents/20.)==0) {
             cout << " " << nextStatus;
             nextStatus+=5;
@@ -160,7 +154,7 @@ void GetVN()
         epIN->Fill( bounds(1, PsiRP) );
         npartIN->Fill( Npart );
         ncollIN->Fill( Ncoll );
-        sizevsb->Fill( b, phi->size() );
+        multvsb->Fill( b, phi->size() );
         int cbin = hcent->GetXaxis()->FindBin(b)-1;
         if (cbin>=NCbins) {continue;}
         // cout<<"b: "<<b<<"\tcbin: "<<cbin<<endl;
@@ -172,6 +166,7 @@ void GetVN()
             etaIN->Fill( eta_ );
             ptIN->Fill( pt_ );
 
+            if (eta_<=-2.4 || eta_>2.4) continue;
             int ebin = v1true2D[0]->GetYaxis()->FindBin(eta_)-1;
             int pbin = v1true2D[0]->GetXaxis()->FindBin(pt_)-1;
             if (ebin>v1true2D[0]->GetNbinsY() || pbin>v1true2D[0]->GetNbinsX()) continue;
@@ -204,13 +199,9 @@ void GetVN()
                 v1true2D[cbin]->SetBinError(pbin+1, ebin+1, errc1);
                 v2true2D[cbin]->SetBinContent(pbin+1, ebin+1, nc2);
                 v2true2D[cbin]->SetBinError(pbin+1, ebin+1, errc2);
-                v1raw2D[cbin]->SetBinContent(pbin+1, ebin+1, c1[cbin][pbin][ebin]);
-                v2raw2D[cbin]->SetBinContent(pbin+1, ebin+1, c2[cbin][pbin][ebin]);
                 qcnt[cbin]->SetBinContent(pbin+1, ebin+1, mult);
             }
         }
-        v1raw2D[cbin]->Divide(qcnt[cbin]);
-        v2raw2D[cbin]->Divide(qcnt[cbin]);
     }
 
     fout = new TFile("hists/amptVN.root","recreate");
@@ -222,15 +213,13 @@ void GetVN()
     epIN->Write();
     npartIN->Write();
     ncollIN->Write();
-    sizevsb->Write();
+    multvsb->Write();
     hcent->Write();
     for (int cbin = 0; cbin<NCbins; cbin++) {
         TDirectory * tdcent = (TDirectory *) fout->mkdir(Form("%d_%d",(int)centbins[cbin],(int)centbins[cbin+1]));
         tdcent->cd();
         v1true2D[cbin]->Write();
         v2true2D[cbin]->Write();
-        v1raw2D[cbin]->Write();
-        v2raw2D[cbin]->Write();
         qcnt[cbin]->Write();
     }
 
@@ -262,13 +251,12 @@ void GetVN()
     ncollIN->SetXTitle("N_{coll}");
     ncollIN->Draw();
     cinputs->cd(8);
-    sizevsb->SetXTitle("b");
-    sizevsb->SetYTitle("Multiplicity");
-    sizevsb->Draw();
+    multvsb->SetXTitle("b");
+    multvsb->SetYTitle("Multiplicity");
+    multvsb->Draw();
     cinputs->Print("figures/AMPT_inputs.png","png");
     fout->cd(); cinputs->Write();
 
-
-    //fout->Close();
+    fout->Close();
 
 }

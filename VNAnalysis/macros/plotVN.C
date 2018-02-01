@@ -36,11 +36,23 @@ TH1D * v2_pT[NCbins][netabins];
 TH1D * v1true_eta[NCbins];
 TH1D * v2true_eta[NCbins];
 
-TH1D * q1;
-TH1D * q2;
-TH1D * w0;
+TH1D * v1_pT_eta_0_8_neg[NCbins];
+TH1D * v1_pT_eta_0_8_pos[NCbins];
+TH1D * v1_pT_eta_0_24_neg[NCbins];
+TH1D * v1_pT_eta_0_24_pos[NCbins];
+TH1D * v1_pT_eta_0_8_av[NCbins];
+TH1D * v1_pT_eta_0_24_av[NCbins];
+TH1D * v2_pT_eta_0_8_av[NCbins];
+TH1D * v2_pT_eta_0_24_av[NCbins];
+
+TH1D * data_v1_eta[NCbins];
+TH1D * data_v1_pT_eta_0_24_pos[NCbins];
+TH1D * data_v1_pT_eta_0_24_neg[NCbins];
+TH1D * data_v1_pT_eta_0_24_av[NCbins];
 
 TFile * fin;
+TFile * finDataEta;
+TFile * finDataPt;
 TFile * fout;
 
 # include "style.h"
@@ -62,6 +74,21 @@ void plotVN() {
 
         v1true_eta[cbin] = new TH1D(Form("v1true_eta_%s",ctag.Data()), "", netabins, etabins);
         v2true_eta[cbin] = new TH1D(Form("v2true_eta_%s",ctag.Data()), "", netabins, etabins);
+
+        v1_pT_eta_0_8_neg[cbin] = v1true2D[cbin]->ProjectionX(Form("v1_pT_eta_0_8_neg_%s",ctag.Data()), 5, 6);
+        v1_pT_eta_0_8_pos[cbin] = v1true2D[cbin]->ProjectionX(Form("v1_pT_eta_0_8_pos_%s",ctag.Data()), 7, 8);
+        v1_pT_eta_0_24_neg[cbin] = v1true2D[cbin]->ProjectionX(Form("v1_pT_eta_0_24_neg_%s",ctag.Data()), 1, 6);
+        v1_pT_eta_0_24_pos[cbin] = v1true2D[cbin]->ProjectionX(Form("v1_pT_eta_0_24_pos_%s",ctag.Data()), 7, 12);
+        v2_pT_eta_0_8_av[cbin] = v2true2D[cbin]->ProjectionX(Form("v2_pT_eta_0_8_av_%s",ctag.Data()), 5, 8);
+        v2_pT_eta_0_24_av[cbin] = v2true2D[cbin]->ProjectionX(Form("v2_pT_eta_0_24_av_%s",ctag.Data()), 1, 12);
+
+        v1_pT_eta_0_8_av[cbin] = (TH1D *) v1_pT_eta_0_8_pos[cbin]->Clone(Form("v1_pT_eta_0_8_av_%s",ctag.Data()));
+        v1_pT_eta_0_8_av[cbin]->Add(v1_pT_eta_0_8_neg[cbin],-1);
+        v1_pT_eta_0_8_av[cbin]->Scale(0.5);
+
+        v1_pT_eta_0_24_av[cbin] = (TH1D *) v1_pT_eta_0_24_pos[cbin]->Clone(Form("v1_pT_eta_0_24_av_%s",ctag.Data()));
+        v1_pT_eta_0_24_av[cbin]->Add(v1_pT_eta_0_24_neg[cbin],-1);
+        v1_pT_eta_0_24_av[cbin]->Scale(0.5);
 
         for (int ebin = 0; ebin<netabins; ebin++) {
             v1_pT[cbin][ebin] = v1true2D[cbin]->ProjectionX(Form("v1_pT_eta_%1.1f_%1.1f_%s",etabins[ebin],etabins[ebin+1],ctag.Data()), ebin+1, ebin+1);
@@ -114,11 +141,6 @@ void plotVN() {
         }
     }
 
-    // compute integral v1(eta)
-    for (int cbin = 0; cbin<NCbins; cbin++) {
-
-    }
-
     if (!fopen("figures","r")) system("mkdir figures");
     fout = new TFile("figures/outputVN.root","recreate");
     for (int cbin = 0; cbin<NCbins; cbin++) {
@@ -126,6 +148,14 @@ void plotVN() {
         tdir->cd();
         v1true_eta[cbin]->Write();
         v2true_eta[cbin]->Write();
+        v1_pT_eta_0_8_av[cbin]->Write();
+        v1_pT_eta_0_24_av[cbin]->Write();
+        v1_pT_eta_0_8_neg[cbin]->Write();
+        v1_pT_eta_0_8_pos[cbin]->Write();
+        v1_pT_eta_0_24_neg[cbin]->Write();
+        v1_pT_eta_0_24_pos[cbin]->Write();
+        v2_pT_eta_0_8_av[cbin]->Write();
+        v2_pT_eta_0_24_av[cbin]->Write();
         for (int ebin = 0; ebin<netabins; ebin++) {
             TDirectory * tdire = (TDirectory *) tdir->mkdir(Form("eta_%1.1f_%1.1f",etabins[ebin],etabins[ebin+1]));
             tdire->cd();
@@ -133,5 +163,33 @@ void plotVN() {
             v2_pT[cbin][ebin]->Write();
         }
     }
+
+    finDataEta = new TFile("/mnt/c/Users/willj/macros/v1flow/2015_PbPb/MH_v2/macros/hists/MH_combined_Eta.root","read");
+    finDataPt = new TFile("/mnt/c/Users/willj/macros/v1flow/2015_PbPb/MH_v2/macros/hists/MH_combined_Pt.root","read");
+    for (int cbin = 0; cbin<ncentbins; cbin++) {
+        TString ctag = Form("%d_%d",centbins[cbin],centbins[cbin+1]);
+        data_v1_eta[cbin] = (TH1D *) finDataEta->Get(Form("MH_nominal/%s/N1SUB2_%s",ctag.Data(),ctag.Data()));
+        data_v1_pT_eta_0_24_pos[cbin] = (TH1D *) finDataPt->GetForm("MH_nominal/eta_0_24/N1SUB2_eta_0_24_%s",ctag.Data()));
+        data_v1_pT_eta_0_24_neg[cbin] = (TH1D *) finDataPt->GetForm("MH_nominal/eta_-24_0/N1SUB2_eta_-24_0_%s",ctag.Data()));
+        data_v1_pT_eta_0_24_av[cbin] = (TH1D *) data_v1_pT_eta_0_24_pos[cbin]->Clone(Form("N1SUB2_eta_-24_24_%s",ctag.Data()));
+        data_v1_pT_eta_0_24_av[cbin]->Add(data_v1_pT_eta_0_24_neg[cbin]);
+        data_v1_pT_eta_0_24_av[cbin]->Scale(0.5);
+    }
+
+    TCanvas * c0 = new TCanvas("c0","c0",600,550);
+    TPad * pad0 = (TPad *) c0->cd();
+    pad0->SetGrid();
+    int setcent = 5;
+    TH1D * h0 = new TH1D("h0", "", 100, -2.5, 2.5);
+    h0->SetStats(0);
+    h0->SetXTitle("#eta");
+    h0->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
+    h0->GetYaxis()->SetRangeUser(-0.02, 0.02);
+    h0->Draw();
+    v1_pT_eta_0_24_neg[setcent]->SetMarkerColor(kOrange+7);
+    v1_pT_eta_0_24_neg[setcent]->SetLineColor(kOrange+7);
+    v1_pT_eta_0_24_neg[setcent]->SetFillColor(kOrange+7);
+    v1_pT_eta_0_24_neg[setcent]->Draw("same");
+    data_v1_pT_eta_0_24_av[setcent]->Draw("same");
 
 }
