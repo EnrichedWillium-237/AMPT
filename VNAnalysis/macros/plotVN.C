@@ -82,6 +82,13 @@ void plotVN() {
         v2_pT_eta_0_8_av[cbin] = v2true2D[cbin]->ProjectionX(Form("v2_pT_eta_0_8_av_%s",ctag.Data()), 5, 8);
         v2_pT_eta_0_24_av[cbin] = v2true2D[cbin]->ProjectionX(Form("v2_pT_eta_0_24_av_%s",ctag.Data()), 1, 12);
 
+        v1_pT_eta_0_8_neg[cbin]->Scale(1/2.);
+        v1_pT_eta_0_8_pos[cbin]->Scale(1/2.);
+        v1_pT_eta_0_24_neg[cbin]->Scale(1/6.);
+        v1_pT_eta_0_24_pos[cbin]->Scale(1/6.);
+        v2_pT_eta_0_8_av[cbin]->Scale(1/4.);
+        v2_pT_eta_0_24_av[cbin]->Scale(1/12.);
+
         v1_pT_eta_0_8_av[cbin] = (TH1D *) v1_pT_eta_0_8_pos[cbin]->Clone(Form("v1_pT_eta_0_8_av_%s",ctag.Data()));
         v1_pT_eta_0_8_av[cbin]->Add(v1_pT_eta_0_8_neg[cbin],-1);
         v1_pT_eta_0_8_av[cbin]->Scale(0.5);
@@ -164,24 +171,25 @@ void plotVN() {
         }
     }
 
-    finDataEta = new TFile("/mnt/c/Users/willj/macros/v1flow/2015_PbPb/MH_v2/macros/hists/MH_combined_Eta.root","read");
-    finDataPt = new TFile("/mnt/c/Users/willj/macros/v1flow/2015_PbPb/MH_v2/macros/hists/MH_combined_Pt.root","read");
+    finDataEta = new TFile("../../../2015_PbPb/MH_v2/macros/hists/MH_combined_Eta.root","read");
+    finDataPt = new TFile("../../..//2015_PbPb/MH_v2/macros/hists/MH_combined_Pt.root","read");
     for (int cbin = 0; cbin<NCbins; cbin++) {
         TString ctag = Form("%d_%d",(int)centbins[cbin],(int)centbins[cbin+1]);
         data_v1_eta[cbin] = (TH1D *) finDataEta->Get(Form("MH_nominal/%s/N1SUB2_%s",ctag.Data(),ctag.Data()));
         data_v1_pT_eta_0_24_pos[cbin] = (TH1D *) finDataPt->Get(Form("MH_nominal/eta_0_24/%s/N1SUB2_eta_0_24_%s",ctag.Data(),ctag.Data()));
         data_v1_pT_eta_0_24_neg[cbin] = (TH1D *) finDataPt->Get(Form("MH_nominal/eta_-24_0/%s/N1SUB2_eta_-24_0_%s",ctag.Data(),ctag.Data()));
         data_v1_pT_eta_0_24_av[cbin] = (TH1D *) data_v1_pT_eta_0_24_pos[cbin]->Clone(Form("N1SUB2_eta_-24_24_%s",ctag.Data()));
-        data_v1_pT_eta_0_24_av[cbin]->Add(data_v1_pT_eta_0_24_neg[cbin]);
+        data_v1_pT_eta_0_24_av[cbin]->Add(data_v1_pT_eta_0_24_neg[cbin],-1);
         data_v1_pT_eta_0_24_av[cbin]->Scale(0.5);
     }
 
     if (!fopen("figures/ampt","r")) system("mkdir figures/ampt");
 
+    int setcent = 4;
+
     TCanvas * c0 = new TCanvas("c0","c0",600,550);
     TPad * pad0 = (TPad *) c0->cd();
     pad0->SetGrid();
-    int setcent = 1;
     TH1D * h0 = new TH1D("h0", "", 100, -2.5, 2.5);
     h0->SetStats(0);
     h0->SetXTitle("#eta");
@@ -190,10 +198,12 @@ void plotVN() {
     h0->Draw();
     v1true_eta[setcent]->SetMarkerColor(kOrange+1);
     v1true_eta[setcent]->SetLineColor(kOrange+1);
-    v1true_eta[setcent]->SetLineWidth(5);
-    v1true_eta[setcent]->SetFillColor(kOrange+1);
-    v1true_eta[setcent]->SetFillStyle(1001);
-    v1true_eta[setcent]->Draw("same E3");
+    //v1true_eta[setcent]->SetFillColor(kOrange+1);
+    //v1true_eta[setcent]->SetFillStyle(1001);
+    //v1true_eta[setcent]->Draw("same E3");
+    v1true_eta[setcent]->SetMarkerStyle(21);
+    v1true_eta[setcent]->SetMarkerSize(1.2);
+    v1true_eta[setcent]->Draw("same hist c");
     v1true_eta[setcent]->Draw("same");
     data_v1_eta[setcent]->SetMarkerColor(kBlue);
     data_v1_eta[setcent]->SetLineColor(kBlue);
@@ -208,8 +218,71 @@ void plotVN() {
     TLegend * leg0 = new TLegend(0.20, 0.18, 0.48, 0.31);
     SetLegend(leg0, 20);
     leg0->AddEntry(data_v1_eta[setcent],"PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
-    leg0->AddEntry(v1true_eta[setcent],"AMPT with string melting","l");
+    leg0->AddEntry(v1true_eta[setcent],"AMPT with string melting","lp");
     leg0->Draw();
     c0->Print(Form("figures/ampt/compare_PbPb_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
+
+
+    TCanvas * c1 = new TCanvas("c1","c1",600,550);
+    TPad * pad1 = (TPad *) c1->cd();
+    pad1->SetGrid();
+    TH1D * h1 = new TH1D("h1", "", 100, 0, 12);
+    h1->SetStats(0);
+    h1->SetXTitle("#eta");
+    h1->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
+    h1->GetYaxis()->SetRangeUser(-0.04, 0.02);
+    h1->Draw();
+    v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kOrange+1);
+    v1_pT_eta_0_24_av[setcent]->SetLineColor(kOrange+1);
+    // v1_pT_eta_0_24_av[setcent]->SetFillColor(kOrange+1);
+    // v1_pT_eta_0_24_av[setcent]->SetFillStyle(1001);
+    //v1_pT_eta_0_24_av[setcent]->Draw("same E3");
+    v1_pT_eta_0_24_av[setcent]->SetMarkerStyle(21);
+    v1_pT_eta_0_24_av[setcent]->SetMarkerSize(1.2);
+    v1_pT_eta_0_24_av[setcent]->Draw("same hist c");
+    v1_pT_eta_0_24_av[setcent]->Draw("same");
+    data_v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kBlue);
+    data_v1_pT_eta_0_24_av[setcent]->SetLineColor(kBlue);
+    data_v1_pT_eta_0_24_av[setcent]->SetMarkerStyle(21);
+    data_v1_pT_eta_0_24_av[setcent]->SetMarkerSize(1.2);
+    data_v1_pT_eta_0_24_av[setcent]->Draw("same");
+    TPaveText * tx1 = new TPaveText(0.20, 0.81, 0.37, 0.92, "NDC");
+    SetTPaveTxt(tx1, 20);
+    tx1->AddText(Form("%d-%d%%",(int)centbins[setcent],(int)centbins[setcent+1]));
+    tx1->AddText("|#eta| < 2.4");
+    tx1->Draw();
+    TLegend * leg1 = new TLegend(0.36, 0.80, 0.64, 0.93);
+    SetLegend(leg1, 20);
+    leg1->AddEntry(data_v1_pT_eta_0_24_av[setcent],"PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
+    leg1->AddEntry(v1_pT_eta_0_24_av[setcent],"AMPT","lp");
+    leg1->Draw();
+    c1->Print(Form("figures/ampt/compare_PbPb_pT_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
+
+
+    TCanvas * c2 = new TCanvas("c2","c2",600,550);
+    TPad * pad2 = (TPad *) c2->cd();
+    pad2->SetGrid();
+    TH1D * h2 = new TH1D("h2", "", 100, -2.5, 2.5);
+    h2->SetStats(0);
+    h2->SetXTitle("#eta");
+    h2->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
+    h2->GetYaxis()->SetRangeUser(0.0, 0.10);
+    h2->Draw();
+    v2true_eta[setcent]->SetMarkerColor(kOrange+1);
+    v2true_eta[setcent]->SetLineColor(kOrange+1);
+    //v2true_eta[setcent]->SetFillColor(kOrange+1);
+    //v2true_eta[setcent]->SetFillStyle(1001);
+    //v2true_eta[setcent]->Draw("same E3");
+    v2true_eta[setcent]->SetMarkerStyle(21);
+    v2true_eta[setcent]->SetMarkerSize(1.2);
+    v2true_eta[setcent]->Draw("same hist c");
+    v2true_eta[setcent]->Draw("same");
+    TPaveText * tx2 = new TPaveText(0.62, 0.82, 0.92, 0.93, "NDC");
+    SetTPaveTxt(tx2, 20);
+    tx2->AddText(Form("%d-%d%%",(int)centbins[setcent],(int)centbins[setcent+1]));
+    tx2->AddText("0.3 < p_{T} < 3.0 GeV/c");
+    tx2->Draw();
+    TLegend * leg2 = new TLegend(0.20, 0.18, 0.48, 0.31);
+    c2->Print(Form("figures/ampt/compare_v2_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
 
 }

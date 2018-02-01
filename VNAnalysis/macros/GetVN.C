@@ -110,6 +110,10 @@ void GetVN()
     tree0 = (TTree *) fin->Get("QWTreeMaker/trV");
     tree0->SetMakeClass(1);
     tree1 = (TTree *) fin->Get("QWHepMCMaker/trV");
+
+    int nevents = tree1->GetEntries();
+    // int nevents = 1e6;
+
     tree1->SetMakeClass(1);
     tree0->AddFriend(tree1);
 
@@ -129,8 +133,6 @@ void GetVN()
     Double_t cnt[NCbins][nptbins][netabins] = {0};
 
     // main event loop
-    int nevents = tree1->GetEntries();
-    // int nevents = 1e6;
     int nextStatus = 5;
     double tottime = 0;
     int ievnt = 0;
