@@ -90,7 +90,7 @@ void GetCent()
     // main event loop
     int nevents = tree0->GetEntries();
     int nextStatus = 5;
-    double clck = 0;
+    double tottime = 0;
     int ievnt = 0;
     TStopwatch * sw = new TStopwatch();
     sw->Start();
@@ -98,17 +98,16 @@ void GetCent()
     while ( tree0->GetEntry(ievnt++) ) {
         //
         // nevents = 1e6;
-        if (ievnt>=nevents) continue;
+        if (ievnt>=nevents) break;
         //
         if (fmod(double(ievnt+1), nevents/20.)==0) {
             cout << " " << nextStatus;
             nextStatus+=5;
-
             sw->Continue();
             double elapse0 = sw->RealTime();
-            if (nextStatus == 5) clck = elapse0;
+            if (nextStatus == 10) tottime = elapse0;
             cout << "\tElapse time: " << Form("%3.2f",elapse0) << " seconds";
-            cout << "\tEstimated total run time: " << Form("%3.2f",clck*20./60./60.) << " hours" << endl;
+            cout << "\tEstimated total run time: " << Form("%3.2f",tottime*20./60./60.) << " hours" << endl;
         }
         bIN->Fill( b );
         npartIN->Fill( Npart );

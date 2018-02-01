@@ -53,12 +53,12 @@ TH1D * ncollIN;
 TH2D * sizevsb;
 
 TH1D * hcent;
-double ccutlow[ncentbins];
-TH2D * v1true2D[ncentbins];
-TH2D * v2true2D[ncentbins];
-TH2D * v1raw2D[ncentbins];
-TH2D * v2raw2D[ncentbins];
-TH2D * qcnt[ncentbins];
+double ccutlow[NCbins];
+TH2D * v1true2D[NCbins];
+TH2D * v2true2D[NCbins];
+TH2D * v1raw2D[NCbins];
+TH2D * v2raw2D[NCbins];
+TH2D * qcnt[NCbins];
 
 TFile * fin;
 TFile * fcent;
@@ -135,25 +135,25 @@ void GetVN()
     // main event loop
     int nevents = tree0->GetEntries();
     int nextStatus = 5;
-    double clck = 0;
+    double tottime = 0;
     int ievnt = 0;
     TStopwatch * sw = new TStopwatch();
     sw->Start();
-    cout << "Entering primary event loop..." <<endl;
+    cout << nevents << " events to be processed " << endl;
+    cout << "Entering primary event loop..." << endl;
     while ( tree0->GetEntry(ievnt++) ) {
         //
         // nevents = 1e6;
-        if (ievnt>=nevents) continue;
+        if (ievnt>=nevents) break;
         //
         if (fmod(double(ievnt+1), nevents/20.)==0) {
             cout << " " << nextStatus;
             nextStatus+=5;
-
             sw->Continue();
             double elapse0 = sw->RealTime();
-            if (nextStatus == 5) clck = elapse0;
+            if (nextStatus == 10) tottime = elapse0;
             cout << "\tElapse time: " << Form("%3.2f",elapse0) << " seconds";
-            cout << "\tEstimated total run time: " << Form("%3.2f",clck*20./60./60.) << " hours" << endl;
+            cout << "\tEstimated total run time: " << Form("%3.2f",tottime*20./60./60.) << " hours" << endl;
         }
 
         bIN->Fill( b );
@@ -162,7 +162,7 @@ void GetVN()
         ncollIN->Fill( Ncoll );
         sizevsb->Fill( b, phi->size() );
         int cbin = hcent->GetXaxis()->FindBin(b)-1;
-        if (cbin>=NCbins) continue;
+        if (cbin>=NCbins) {continue;}
         // cout<<"b: "<<b<<"\tcbin: "<<cbin<<endl;
         for ( unsigned int i = 0; i<phi->size(); i++ ) {
             double phi_ = bounds(1, (*phi)[i]);
