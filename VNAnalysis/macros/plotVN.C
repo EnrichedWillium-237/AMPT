@@ -196,9 +196,9 @@ void plotVN() {
     h0->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
     h0->GetYaxis()->SetRangeUser(-0.015, 0.015);
     h0->Draw();
-    v1true_eta[setcent]->SetMarkerColor(kOrange+1);
-    v1true_eta[setcent]->SetLineColor(kOrange+1);
-    //v1true_eta[setcent]->SetFillColor(kOrange+1);
+    v1true_eta[setcent]->SetMarkerColor(kOrange+7);
+    v1true_eta[setcent]->SetLineColor(kOrange+7);
+    //v1true_eta[setcent]->SetFillColor(kOrange+7);
     //v1true_eta[setcent]->SetFillStyle(1001);
     //v1true_eta[setcent]->Draw("same E3");
     v1true_eta[setcent]->SetMarkerStyle(21);
@@ -218,7 +218,7 @@ void plotVN() {
     TLegend * leg0 = new TLegend(0.20, 0.18, 0.48, 0.31);
     SetLegend(leg0, 20);
     leg0->AddEntry(data_v1_eta[setcent],"PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
-    leg0->AddEntry(v1true_eta[setcent],"AMPT with string melting","lp");
+    leg0->AddEntry(v1true_eta[setcent],"AMPT","lp");
     leg0->Draw();
     c0->Print(Form("figures/ampt/compare_PbPb_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
 
@@ -228,18 +228,17 @@ void plotVN() {
     pad1->SetGrid();
     TH1D * h1 = new TH1D("h1", "", 100, 0, 12);
     h1->SetStats(0);
-    h1->SetXTitle("#eta");
+    h1->SetXTitle("p_{T} (GeV/c)");
     h1->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
     h1->GetYaxis()->SetRangeUser(-0.04, 0.02);
     h1->Draw();
-    v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kOrange+1);
-    v1_pT_eta_0_24_av[setcent]->SetLineColor(kOrange+1);
-    // v1_pT_eta_0_24_av[setcent]->SetFillColor(kOrange+1);
+    v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kOrange+7);
+    v1_pT_eta_0_24_av[setcent]->SetLineColor(kOrange+7);
+    // v1_pT_eta_0_24_av[setcent]->SetFillColor(kOrange+7);
     // v1_pT_eta_0_24_av[setcent]->SetFillStyle(1001);
     //v1_pT_eta_0_24_av[setcent]->Draw("same E3");
     v1_pT_eta_0_24_av[setcent]->SetMarkerStyle(21);
     v1_pT_eta_0_24_av[setcent]->SetMarkerSize(1.2);
-    v1_pT_eta_0_24_av[setcent]->Draw("same hist c");
     v1_pT_eta_0_24_av[setcent]->Draw("same");
     data_v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kBlue);
     data_v1_pT_eta_0_24_av[setcent]->SetLineColor(kBlue);
@@ -268,21 +267,31 @@ void plotVN() {
     h2->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
     h2->GetYaxis()->SetRangeUser(0.0, 0.10);
     h2->Draw();
-    v2true_eta[setcent]->SetMarkerColor(kOrange+1);
-    v2true_eta[setcent]->SetLineColor(kOrange+1);
-    //v2true_eta[setcent]->SetFillColor(kOrange+1);
+    v2true_eta[setcent]->SetMarkerColor(kOrange+7);
+    v2true_eta[setcent]->SetLineColor(kOrange+7);
+    //v2true_eta[setcent]->SetFillColor(kOrange+7);
     //v2true_eta[setcent]->SetFillStyle(1001);
     //v2true_eta[setcent]->Draw("same E3");
     v2true_eta[setcent]->SetMarkerStyle(21);
     v2true_eta[setcent]->SetMarkerSize(1.2);
-    v2true_eta[setcent]->Draw("same hist c");
     v2true_eta[setcent]->Draw("same");
-    TPaveText * tx2 = new TPaveText(0.62, 0.82, 0.92, 0.93, "NDC");
+    # include "../../../2015_PbPb/published_results/HIN-10-002.h"
+    TGraphErrors * v2HIN_10_002_eta_20_25 = new TGraphErrors(12, v2eta_points, v2Ecent20to25, 0, v2Ecent20to25Err);
+    v2HIN_10_002_eta_20_25->SetMarkerColor(kBlue);
+    v2HIN_10_002_eta_20_25->SetLineColor(kBlue);
+    v2HIN_10_002_eta_20_25->SetMarkerStyle(21);
+    v2HIN_10_002_eta_20_25->SetMarkerSize(1.2);
+    v2HIN_10_002_eta_20_25->Draw("same p");
+    TPaveText * tx2 = new TPaveText(0.20, 0.19, 0.50, 0.30, "NDC");
     SetTPaveTxt(tx2, 20);
     tx2->AddText(Form("%d-%d%%",(int)centbins[setcent],(int)centbins[setcent+1]));
     tx2->AddText("0.3 < p_{T} < 3.0 GeV/c");
     tx2->Draw();
-    TLegend * leg2 = new TLegend(0.20, 0.18, 0.48, 0.31);
+    TLegend * leg2 = new TLegend(0.63, 0.19, 0.91, 0.30);
+    SetLegend(leg2, 20);
+    leg2->AddEntry(v2HIN_10_002_eta_20_25,"HIN-10-002","p");
+    leg2->AddEntry(v2true_eta[setcent],"AMPT","p");
+    leg2->Draw();
     c2->Print(Form("figures/ampt/compare_v2_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
 
 }
