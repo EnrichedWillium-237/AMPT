@@ -166,30 +166,50 @@ void plotVN() {
 
     finDataEta = new TFile("/mnt/c/Users/willj/macros/v1flow/2015_PbPb/MH_v2/macros/hists/MH_combined_Eta.root","read");
     finDataPt = new TFile("/mnt/c/Users/willj/macros/v1flow/2015_PbPb/MH_v2/macros/hists/MH_combined_Pt.root","read");
-    for (int cbin = 0; cbin<ncentbins; cbin++) {
-        TString ctag = Form("%d_%d",centbins[cbin],centbins[cbin+1]);
+    for (int cbin = 0; cbin<NCbins; cbin++) {
+        TString ctag = Form("%d_%d",(int)centbins[cbin],(int)centbins[cbin+1]);
         data_v1_eta[cbin] = (TH1D *) finDataEta->Get(Form("MH_nominal/%s/N1SUB2_%s",ctag.Data(),ctag.Data()));
-        data_v1_pT_eta_0_24_pos[cbin] = (TH1D *) finDataPt->GetForm("MH_nominal/eta_0_24/N1SUB2_eta_0_24_%s",ctag.Data()));
-        data_v1_pT_eta_0_24_neg[cbin] = (TH1D *) finDataPt->GetForm("MH_nominal/eta_-24_0/N1SUB2_eta_-24_0_%s",ctag.Data()));
+        data_v1_pT_eta_0_24_pos[cbin] = (TH1D *) finDataPt->Get(Form("MH_nominal/eta_0_24/%s/N1SUB2_eta_0_24_%s",ctag.Data(),ctag.Data()));
+        data_v1_pT_eta_0_24_neg[cbin] = (TH1D *) finDataPt->Get(Form("MH_nominal/eta_-24_0/%s/N1SUB2_eta_-24_0_%s",ctag.Data(),ctag.Data()));
         data_v1_pT_eta_0_24_av[cbin] = (TH1D *) data_v1_pT_eta_0_24_pos[cbin]->Clone(Form("N1SUB2_eta_-24_24_%s",ctag.Data()));
         data_v1_pT_eta_0_24_av[cbin]->Add(data_v1_pT_eta_0_24_neg[cbin]);
         data_v1_pT_eta_0_24_av[cbin]->Scale(0.5);
     }
 
+    if (!fopen("figures/ampt","r")) system("mkdir figures/ampt");
+
     TCanvas * c0 = new TCanvas("c0","c0",600,550);
     TPad * pad0 = (TPad *) c0->cd();
     pad0->SetGrid();
-    int setcent = 5;
+    int setcent = 1;
     TH1D * h0 = new TH1D("h0", "", 100, -2.5, 2.5);
     h0->SetStats(0);
     h0->SetXTitle("#eta");
     h0->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
-    h0->GetYaxis()->SetRangeUser(-0.02, 0.02);
+    h0->GetYaxis()->SetRangeUser(-0.015, 0.015);
     h0->Draw();
-    v1_pT_eta_0_24_neg[setcent]->SetMarkerColor(kOrange+7);
-    v1_pT_eta_0_24_neg[setcent]->SetLineColor(kOrange+7);
-    v1_pT_eta_0_24_neg[setcent]->SetFillColor(kOrange+7);
-    v1_pT_eta_0_24_neg[setcent]->Draw("same");
-    data_v1_pT_eta_0_24_av[setcent]->Draw("same");
+    v1true_eta[setcent]->SetMarkerColor(kOrange+1);
+    v1true_eta[setcent]->SetLineColor(kOrange+1);
+    v1true_eta[setcent]->SetLineWidth(5);
+    v1true_eta[setcent]->SetFillColor(kOrange+1);
+    v1true_eta[setcent]->SetFillStyle(1001);
+    v1true_eta[setcent]->Draw("same E3");
+    v1true_eta[setcent]->Draw("same");
+    data_v1_eta[setcent]->SetMarkerColor(kBlue);
+    data_v1_eta[setcent]->SetLineColor(kBlue);
+    data_v1_eta[setcent]->SetMarkerStyle(21);
+    data_v1_eta[setcent]->SetMarkerSize(1.2);
+    data_v1_eta[setcent]->Draw("same");
+    TPaveText * tx0 = new TPaveText(0.62, 0.79, 0.92, 0.90, "NDC");
+    SetTPaveTxt(tx0, 20);
+    tx0->AddText(Form("%d-%d%%",(int)centbins[setcent],(int)centbins[setcent+1]));
+    tx0->AddText("0.3 < p_{T} < 3.0 GeV/c");
+    tx0->Draw();
+    TLegend * leg0 = new TLegend(0.20, 0.18, 0.48, 0.31);
+    SetLegend(leg0, 20);
+    leg0->AddEntry(data_v1_eta[setcent],"PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
+    leg0->AddEntry(v1true_eta[setcent],"AMPT with string melting","l");
+    leg0->Draw();
+    c0->Print(Form("figures/ampt/compare_PbPb_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
 
 }
