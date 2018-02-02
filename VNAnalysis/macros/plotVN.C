@@ -185,6 +185,8 @@ void plotVN() {
 
     if (!fopen("figures/ampt","r")) system("mkdir figures/ampt");
 
+    # include "../../../2015_PbPb/published_results/PhysRevLett101_252301.h"
+
     int setcent = 4;
 
     TCanvas * c0 = new TCanvas("c0","c0",600,550);
@@ -218,7 +220,7 @@ void plotVN() {
     TLegend * leg0 = new TLegend(0.20, 0.18, 0.48, 0.31);
     SetLegend(leg0, 20);
     leg0->AddEntry(data_v1_eta[setcent],"PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
-    leg0->AddEntry(v1true_eta[setcent],"AMPT","lp");
+    leg0->AddEntry(v1true_eta[setcent],"AMPT PbPb #sqrt{s_{NN}} = 5.02 TeV","lp");
     leg0->Draw();
     c0->Print(Form("figures/ampt/compare_PbPb_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
 
@@ -253,11 +255,12 @@ void plotVN() {
     TLegend * leg1 = new TLegend(0.36, 0.80, 0.64, 0.93);
     SetLegend(leg1, 20);
     leg1->AddEntry(data_v1_pT_eta_0_24_av[setcent],"PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
-    leg1->AddEntry(v1_pT_eta_0_24_av[setcent],"AMPT","lp");
+    leg1->AddEntry(v1_pT_eta_0_24_av[setcent],"AMPT PbPb #sqrt{s_{NN}} = 5.02 TeV","lp");
     leg1->Draw();
     c1->Print(Form("figures/ampt/compare_PbPb_pT_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
 
 
+    setcent = 5;
     TCanvas * c2 = new TCanvas("c2","c2",600,550);
     TPad * pad2 = (TPad *) c2->cd();
     pad2->SetGrid();
@@ -287,11 +290,185 @@ void plotVN() {
     tx2->AddText(Form("%d-%d%%",(int)centbins[setcent],(int)centbins[setcent+1]));
     tx2->AddText("0.3 < p_{T} < 3.0 GeV/c");
     tx2->Draw();
-    TLegend * leg2 = new TLegend(0.63, 0.19, 0.91, 0.30);
+    TLegend * leg2 = new TLegend(0.50, 0.19, 0.78, 0.30);
     SetLegend(leg2, 20);
     leg2->AddEntry(v2HIN_10_002_eta_20_25,"HIN-10-002","p");
-    leg2->AddEntry(v2true_eta[setcent],"AMPT","p");
+    leg2->AddEntry(v2true_eta[setcent],"AMPT PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
     leg2->Draw();
     c2->Print(Form("figures/ampt/compare_v2_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
+
+
+    setcent = 0;
+    TCanvas * c3 = new TCanvas("c3","c3",600,550);
+    TPad * pad3 = (TPad *) c3->cd();
+    pad3->SetGrid();
+    TH1D * h3 = new TH1D("h3", "", 100, 0, 4);
+    h3->SetStats(0);
+    h3->SetXTitle("p_{T} (GeV/c)");
+    h3->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
+    h3->GetYaxis()->SetRangeUser(-0.006, 0.006);
+    h3->Draw();
+    v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kOrange+7);
+    v1_pT_eta_0_24_av[setcent]->SetLineColor(kOrange+7);
+    v1_pT_eta_0_24_av[setcent]->SetMarkerStyle(21);
+    v1_pT_eta_0_24_av[setcent]->SetMarkerSize(1.2);
+    v1_pT_eta_0_24_av[setcent]->Draw("same");
+    data_v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kBlue);
+    data_v1_pT_eta_0_24_av[setcent]->SetLineColor(kBlue);
+    data_v1_pT_eta_0_24_av[setcent]->SetMarkerStyle(21);
+    data_v1_pT_eta_0_24_av[setcent]->SetMarkerSize(1.2);
+    data_v1_pT_eta_0_24_av[setcent]->Draw("same");
+    TH1D * hSTAR_pT_0_5 = new TH1D("hSTAR_pT_0_5", "", 8, STAR_AuAu_200_TPC_cent0_5_pbin);
+    for (int i = 0; i<8; i++) {
+        hSTAR_pT_0_5->SetBinContent(i+1, STAR_AuAu_200_TPC_cent0_5_pT[i]);
+        hSTAR_pT_0_5->SetBinError(i+1, STAR_AuAu_200_TPC_cent0_5_pTerr[i]);
+    }
+    hSTAR_pT_0_5->SetMarkerColor(kRed);
+    hSTAR_pT_0_5->SetLineColor(kRed);
+    hSTAR_pT_0_5->SetMarkerStyle(30);
+    hSTAR_pT_0_5->SetMarkerSize(1.6);
+    hSTAR_pT_0_5->Draw("same");
+    TLegend * leg3 = new TLegend(0.19, 0.77, 0.47, 0.93);
+    SetLegend(leg3, 20);
+    leg3->AddEntry(data_v1_pT_eta_0_24_av[setcent],Form("PbPb #sqrt{s_{NN}} = 5.02 TeV |#eta| < 2.4 (%d-%d%%)",(int)centbins[setcent],(int)centbins[setcent+1]),"p");
+    leg3->AddEntry(hSTAR_pT_0_5,"AuAu #sqrt{s_{NN}} = 200 GeV |#eta| < 1.3 (0-5%)","p");
+    leg3->AddEntry(v1_pT_eta_0_24_av[setcent],"AMPT PbPb #sqrt{s_{NN}} = 5.02 TeV","lp");
+    leg3->Draw();
+    c3->Print(Form("figures/ampt/compare_PbPb_STAR_pT_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
+
+
+    setcent = 6;
+    TCanvas * c4 = new TCanvas("c4","c4",600,550);
+    TPad * pad4 = (TPad *) c4->cd();
+    pad4->SetGrid();
+    TH1D * h4 = new TH1D("h4", "", 100, 0, 4);
+    h4->SetStats(0);
+    h4->SetXTitle("p_{T} (GeV/c)");
+    h4->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
+    h4->GetYaxis()->SetRangeUser(-0.015, 0.008);
+    h4->Draw();
+    v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kOrange+7);
+    v1_pT_eta_0_24_av[setcent]->SetLineColor(kOrange+7);
+    v1_pT_eta_0_24_av[setcent]->SetMarkerStyle(21);
+    v1_pT_eta_0_24_av[setcent]->SetMarkerSize(1.2);
+    v1_pT_eta_0_24_av[setcent]->Draw("same");
+    data_v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kBlue);
+    data_v1_pT_eta_0_24_av[setcent]->SetLineColor(kBlue);
+    data_v1_pT_eta_0_24_av[setcent]->SetMarkerStyle(21);
+    data_v1_pT_eta_0_24_av[setcent]->SetMarkerSize(1.2);
+    data_v1_pT_eta_0_24_av[setcent]->Draw("same");
+    TH1D * hSTAR_pT_5_40 = new TH1D("hSTAR_pT_5_40", "", 8, STAR_AuAu_200_TPC_cent5_40_pbin);
+    for (int i = 0; i<8; i++) {
+        hSTAR_pT_5_40->SetBinContent(i+1, STAR_AuAu_200_TPC_cent5_40_pT[i]);
+        hSTAR_pT_5_40->SetBinError(i+1, STAR_AuAu_200_TPC_cent5_40_pTerr[i]);
+    }
+    hSTAR_pT_5_40->SetMarkerColor(kRed);
+    hSTAR_pT_5_40->SetLineColor(kRed);
+    hSTAR_pT_5_40->SetMarkerStyle(30);
+    hSTAR_pT_5_40->SetMarkerSize(1.6);
+    hSTAR_pT_5_40->Draw("same");
+    TLegend * leg4 = new TLegend(0.19, 0.77, 0.47, 0.93);
+    SetLegend(leg4, 20);
+    leg4->AddEntry(data_v1_pT_eta_0_24_av[setcent],Form("PbPb #sqrt{s_{NN}} = 5.02 TeV |#eta| < 2.4 (%d-%d%%)",(int)centbins[setcent],(int)centbins[setcent+1]),"p");
+    leg4->AddEntry(hSTAR_pT_5_40,"AuAu #sqrt{s_{NN}} = 200 GeV |#eta| < 1.3 (5-40%)","p");
+    leg4->AddEntry(v1_pT_eta_0_24_av[setcent],"AMPT PbPb #sqrt{s_{NN}} = 5.02 TeV","lp");
+    leg4->Draw();
+    c4->Print(Form("figures/ampt/compare_PbPb_STAR_pT_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
+
+
+    setcent = 0;
+    TCanvas * c5 = new TCanvas("c5","c5",600,550);
+    TPad * pad5 = (TPad *) c5->cd();
+    pad5->SetGrid();
+    TH1D * h5 = new TH1D("h5", "", 100, -2.5, 2.5);
+    h5->SetStats(0);
+    h5->SetXTitle("#eta");
+    h5->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
+    h5->GetYaxis()->SetRangeUser(-0.015, 0.015);
+    h5->Draw();
+    v1true_eta[setcent]->SetMarkerColor(kOrange+7);
+    v1true_eta[setcent]->SetLineColor(kOrange+7);
+    //v1true_eta[setcent]->SetFillColor(kOrange+7);
+    //v1true_eta[setcent]->SetFillStyle(1001);
+    //v1true_eta[setcent]->Draw("same E3");
+    v1true_eta[setcent]->SetMarkerStyle(21);
+    v1true_eta[setcent]->SetMarkerSize(1.2);
+    v1true_eta[setcent]->Draw("same hist c");
+    v1true_eta[setcent]->Draw("same");
+    data_v1_eta[setcent]->SetMarkerColor(kBlue);
+    data_v1_eta[setcent]->SetLineColor(kBlue);
+    data_v1_eta[setcent]->SetMarkerStyle(21);
+    data_v1_eta[setcent]->SetMarkerSize(1.2);
+    data_v1_eta[setcent]->Draw("same");
+    TH1D * hSTAR_eta_0_5 = new TH1D("hSTAR_eta_0_5", "", 6, STAR_AuAu_200_cent0_5_eta);
+    for (int i = 0; i<6; i++) {
+        hSTAR_eta_0_5->SetBinContent(i+1, STAR_AuAu_200_cent0_5_v1eta[i]);
+        hSTAR_eta_0_5->SetBinError(i+1, STAR_AuAu_200_cent0_5_v1etaErr[i]);
+    }
+    hSTAR_eta_0_5->SetMarkerColor(kRed);
+    hSTAR_eta_0_5->SetLineColor(kRed);
+    hSTAR_eta_0_5->SetMarkerStyle(30);
+    hSTAR_eta_0_5->SetMarkerSize(1.6);
+    hSTAR_eta_0_5->Draw("same");
+    TPaveText * tx5 = new TPaveText(0.62, 0.79, 0.92, 0.90, "NDC");
+    SetTPaveTxt(tx5, 20);
+    tx5->AddText(Form("%d-%d%%",(int)centbins[setcent],(int)centbins[setcent+1]));
+    tx5->AddText("0.3 < p_{T} < 3.0 GeV/c");
+    tx5->Draw();
+    TLegend * leg5 = new TLegend(0.19, 0.18, 0.47, 0.34);
+    SetLegend(leg5, 20);
+    leg5->AddEntry(data_v1_eta[setcent],"PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
+    leg5->AddEntry(hSTAR_eta_0_5,"AuAu #sqrt{s_{NN}} = 200 GeV (0-5%)","p");
+    leg5->AddEntry(v1true_eta[setcent],"AMPT PbPb #sqrt{s_{NN}} = 5.02 TeV","lp");
+    leg5->Draw();
+    c5->Print(Form("figures/ampt/compare_PbPb_STAR_eta_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
+
+
+    setcent = 6;
+    TCanvas * c6 = new TCanvas("c6","c6",600,550);
+    TPad * pad6 = (TPad *) c6->cd();
+    pad6->SetGrid();
+    TH1D * h6 = new TH1D("h6", "", 100, -2.5, 2.5);
+    h6->SetStats(0);
+    h6->SetXTitle("#eta");
+    h6->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
+    h6->GetYaxis()->SetRangeUser(-0.015, 0.015);
+    h6->Draw();
+    v1true_eta[setcent]->SetMarkerColor(kOrange+7);
+    v1true_eta[setcent]->SetLineColor(kOrange+7);
+    //v1true_eta[setcent]->SetFillColor(kOrange+7);
+    //v1true_eta[setcent]->SetFillStyle(1001);
+    //v1true_eta[setcent]->Draw("same E3");
+    v1true_eta[setcent]->SetMarkerStyle(21);
+    v1true_eta[setcent]->SetMarkerSize(1.2);
+    v1true_eta[setcent]->Draw("same hist c");
+    v1true_eta[setcent]->Draw("same");
+    data_v1_eta[setcent]->SetMarkerColor(kBlue);
+    data_v1_eta[setcent]->SetLineColor(kBlue);
+    data_v1_eta[setcent]->SetMarkerStyle(21);
+    data_v1_eta[setcent]->SetMarkerSize(1.2);
+    data_v1_eta[setcent]->Draw("same");
+    TH1D * hSTAR_eta_5_40 = new TH1D("hSTAR_eta_0_5", "", 8, STAR_AuAu_200_cent5_40_eta);
+    for (int i = 0; i<8; i++) {
+        hSTAR_eta_5_40->SetBinContent(i+1, STAR_AuAu_200_cent5_40_v1eta[i]);
+        hSTAR_eta_5_40->SetBinError(i+1, STAR_AuAu_200_cent5_40_v1etaErr[i]);
+    }
+    hSTAR_eta_5_40->SetMarkerColor(kRed);
+    hSTAR_eta_5_40->SetLineColor(kRed);
+    hSTAR_eta_5_40->SetMarkerStyle(30);
+    hSTAR_eta_5_40->SetMarkerSize(1.6);
+    hSTAR_eta_5_40->Draw("same");
+    TPaveText * tx6 = new TPaveText(0.62, 0.79, 0.92, 0.90, "NDC");
+    SetTPaveTxt(tx6, 20);
+    tx6->AddText(Form("%d-%d%%",(int)centbins[setcent],(int)centbins[setcent+1]));
+    tx6->AddText("0.3 < p_{T} < 3.0 GeV/c");
+    tx6->Draw();
+    TLegend * leg6 = new TLegend(0.19, 0.18, 0.47, 0.34);
+    SetLegend(leg6, 20);
+    leg6->AddEntry(data_v1_eta[setcent],"PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
+    leg6->AddEntry(hSTAR_eta_0_5,"AuAu #sqrt{s_{NN}} = 200 GeV (5-40%)","p");
+    leg6->AddEntry(v1true_eta[setcent],"AMPT PbPb #sqrt{s_{NN}} = 5.02 TeV","lp");
+    leg6->Draw();
+    c6->Print(Form("figures/ampt/compare_PbPb_STAR_eta_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
 
 }
