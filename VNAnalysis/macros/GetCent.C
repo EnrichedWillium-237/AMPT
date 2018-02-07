@@ -18,11 +18,14 @@
 
 using namespace std;
 
-static const int ncentbins = 14;
-static const int cminCENT[] = {0,  5, 10, 15, 20, 25, 30, 35, 40, 50, 60,  0, 20,  60};
-static const int cmaxCENT[] = {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 20, 60, 100};
-static const int NCbins = 14;
-static const double centbins[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 100};
+// static const int NCbins = 14;
+// static const double centbins[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 100};
+
+static const int NCbins = 4;
+static const double centbins[] = {0, 5, 10, 70, 100};
+
+// static const int NCbins = 4;
+// static const double centbins[] = {0, 5, 40, 80, 100};
 static const int nptbins = 18;
 static const double ptbins[] = {0.30,  0.40,  0.50,  0.60,  0.80,  1.00,  1.25,  1.50,  2.00,  2.50,  3.00,
     3.50,  4.00,  5.00,  6.00,  7.00,  8.00,  10.00,  12.00};
@@ -97,7 +100,7 @@ void GetCent()
     cout << "Entering primary event loop..." <<endl;
     while ( tree0->GetEntry(ievnt++) ) {
         //
-        // nevents = 1e6;
+        nevents = 1e5;
         if (ievnt>=nevents) break;
         //
         if (fmod(double(ievnt+1), nevents/20.)==0) {
@@ -136,8 +139,8 @@ void GetCent()
         }
         bmax+=0.12-0.001;
     }
-    hcent = new TH1D("centbins", "centbins", ncentbins, centbins);
-    for (int i = 0; i<ncentbins; i++) {
+    hcent = new TH1D("centbins", "centbins", NCbins, centbins);
+    for (int i = 0; i<NCbins; i++) {
         hcent->SetBinContent(i+1, bminCent[i]);
         hcent->SetBinError(i+1, 0.12);
     }
@@ -169,7 +172,7 @@ void GetCent()
 
     if (!fopen("hists","r")) system("mkdir hists");
 
-    fout = new TFile("hists/Cent.root","recreate");
+    fout = new TFile("hists/Cent_10_70.root","recreate");
     fout->cd();
     bIN->Write();
     hcent->Write();

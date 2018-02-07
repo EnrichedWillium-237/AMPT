@@ -18,11 +18,23 @@
 
 using namespace std;
 
-static const int ncentbins = 14;
-static const int cminCENT[] = {0,  5, 10, 15, 20, 25, 30, 35, 40, 50, 60,  0, 20,  60};
-static const int cmaxCENT[] = {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 20, 60, 100};
-static const int NCbins = 14;
-static const double centbins[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 100};
+// static const int ncentbins = 14;
+// static const int cminCENT[] = {0,  5, 10, 15, 20, 25, 30, 35, 40, 50, 60,  0, 10,  70};
+// static const int cmaxCENT[] = {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 10, 70, 100};
+// static const int NCbins = 14;
+// static const double centbins[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 100};
+
+// static const int ncentbins = 4;
+// static const int cminCENT[] = {0,  5, 10, 70};
+// static const int cmaxCENT[] = {5, 10, 70, 100};
+// static const int NCbins = 4;
+// static const double centbins[] = {0, 5, 10, 70, 100};
+
+static const int ncentbins = 4;
+static const int cminCENT[] = {0,  5, 40, 80};
+static const int cmaxCENT[] = {5, 40, 80, 100};
+static const int NCbins = 4;
+static const double centbins[] = {0, 5, 10, 70, 100};
 static const int nptbins = 18;
 static const double ptbins[] = {0.30,  0.40,  0.50,  0.60,  0.80,  1.00,  1.25,  1.50,  2.00,  2.50,  3.00,
     3.50,  4.00,  5.00,  6.00,  7.00,  8.00,  10.00,  12.00};
@@ -97,16 +109,17 @@ void GetVN()
     }
 
     cout << "Retrieving centrality values... " << endl;
-    fcent = new TFile("hists/Cent.root","read");
+    // fcent = new TFile("hists/Cent.root","read");
+    fcent = new TFile("hists/Cent_5_40_80.root","read");
     hcent = (TH1D *) fcent->Get("lowEdge");
     for (int i = 0; i<hcent->GetNbinsX(); i++) {
         ccutlow[i] = hcent->GetBinContent(i+1);
     }
 
-    fin = new TFile("../AMPTsample.root");
-    cout << "Reading file: ../AMPTsample.root" << endl;
-    // fin = new TFile("/rfs/wmcbrayer/AMPT/ampt_string_melting.root");
-    // cout << "Reading file: /rfs/wmcbrayer/AMPT/ampt_string_melting.root" << endl;
+    // fin = new TFile("../AMPTsample.root");
+    // cout << "Reading file: ../AMPTsample.root" << endl;
+    fin = new TFile("/rfs/wmcbrayer/AMPT/ampt_string_melting.root");
+    cout << "Reading file: /rfs/wmcbrayer/AMPT/ampt_string_melting.root" << endl;
     tree0 = (TTree *) fin->Get("QWTreeMaker/trV");
     tree0->SetMakeClass(1);
     tree1 = (TTree *) fin->Get("QWHepMCMaker/trV");
@@ -206,7 +219,8 @@ void GetVN()
         }
     }
 
-    fout = new TFile("hists/amptVN.root","recreate");
+    // fout = new TFile("hists/amptVN.root","recreate");
+    fout = new TFile("hists/amptVN_5_40_80.root","recreate");
     fout->cd();
     phiIN->Write();
     etaIN->Write();

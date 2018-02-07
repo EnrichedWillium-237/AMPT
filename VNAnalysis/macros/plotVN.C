@@ -49,6 +49,7 @@ TH1D * data_v1_eta[NCbins];
 TH1D * data_v1_pT_eta_0_24_pos[NCbins];
 TH1D * data_v1_pT_eta_0_24_neg[NCbins];
 TH1D * data_v1_pT_eta_0_24_av[NCbins];
+TH1D * data_v1_pT_112_0_24[NCbins];
 
 TFile * fin;
 TFile * finDataEta;
@@ -181,6 +182,8 @@ void plotVN() {
         data_v1_pT_eta_0_24_av[cbin] = (TH1D *) data_v1_pT_eta_0_24_pos[cbin]->Clone(Form("N1SUB2_eta_-24_24_%s",ctag.Data()));
         data_v1_pT_eta_0_24_av[cbin]->Add(data_v1_pT_eta_0_24_neg[cbin],-1);
         data_v1_pT_eta_0_24_av[cbin]->Scale(0.5);
+
+        data_v1_pT_112_0_24[cbin] = (TH1D *) finDataPt->Get(Form("MH_nominal/eta_0_24/%s/N112ASUB2_eta_0_24_%s",ctag.Data(),ctag.Data()));
     }
 
     if (!fopen("figures/ampt","r")) system("mkdir figures/ampt");
@@ -345,7 +348,7 @@ void plotVN() {
     h4->SetStats(0);
     h4->SetXTitle("p_{T} (GeV/c)");
     h4->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
-    h4->GetYaxis()->SetRangeUser(-0.015, 0.008);
+    h4->GetYaxis()->SetRangeUser(-0.015, 0.01);
     h4->Draw();
     v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kOrange+7);
     v1_pT_eta_0_24_av[setcent]->SetLineColor(kOrange+7);
@@ -384,7 +387,7 @@ void plotVN() {
     h5->SetStats(0);
     h5->SetXTitle("#eta");
     h5->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
-    h5->GetYaxis()->SetRangeUser(-0.015, 0.015);
+    h5->GetYaxis()->SetRangeUser(-0.007, 0.007);
     h5->Draw();
     v1true_eta[setcent]->SetMarkerColor(kOrange+7);
     v1true_eta[setcent]->SetLineColor(kOrange+7);
@@ -470,5 +473,52 @@ void plotVN() {
     leg6->AddEntry(v1true_eta[setcent],"AMPT PbPb #sqrt{s_{NN}} = 5.02 TeV","lp");
     leg6->Draw();
     c6->Print(Form("figures/ampt/compare_PbPb_STAR_eta_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
+
+
+    // TCanvas * c7 = new TCanvas("c7","c7",600,550);
+    // TPad * pad7 = (TPad *) c7->cd();
+    // pad7->SetGrid();
+    // TH1D * h7 = new TH1D("h7", "", 100, 0, 12);
+    // h7->SetStats(0);
+    // h7->SetXTitle("p_{T} (GeV/c)");
+    // h7->SetYTitle("<<cos(#phi - #Psi_{RP})>>");
+    // h7->GetYaxis()->SetRangeUser(-0.04, 0.02);
+    // h7->Draw();
+    // v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kOrange+7);
+    // v1_pT_eta_0_24_av[setcent]->SetLineColor(kOrange+7);
+    // // v1_pT_eta_0_24_av[setcent]->SetFillColor(kOrange+7);
+    // // v1_pT_eta_0_24_av[setcent]->SetFillStyle(1001);
+    // //v1_pT_eta_0_24_av[setcent]->Draw("same E3");
+    // v1_pT_eta_0_24_av[setcent]->SetMarkerStyle(21);
+    // v1_pT_eta_0_24_av[setcent]->SetMarkerSize(1.2);
+    // v1_pT_eta_0_24_av[setcent]->Draw("same");
+    // data_v1_pT_eta_0_24_av[setcent]->SetMarkerColor(kBlue);
+    // data_v1_pT_eta_0_24_av[setcent]->SetLineColor(kBlue);
+    // data_v1_pT_eta_0_24_av[setcent]->SetMarkerStyle(21);
+    // data_v1_pT_eta_0_24_av[setcent]->SetMarkerSize(1.2);
+    // data_v1_pT_eta_0_24_av[setcent]->Draw("same");
+    // hSTAR_pT_5_40->SetMarkerColor(kRed);
+    // hSTAR_pT_5_40->SetLineColor(kRed);
+    // hSTAR_pT_5_40->SetMarkerStyle(30);
+    // hSTAR_pT_5_40->SetMarkerSize(1.6);
+    // hSTAR_pT_5_40->Draw("same");
+    // data_v1_pT_112_0_24[setcent]->SetMarkerColor(kGreen+3);
+    // data_v1_pT_112_0_24[setcent]->SetLineColor(kGreen+3);
+    // data_v1_pT_112_0_24[setcent]->SetMarkerStyle(28);
+    // data_v1_pT_112_0_24[setcent]->SetMarkerSize(1.5);
+    // data_v1_pT_112_0_24[setcent]->Draw("same");
+    // TPaveText * tx7 = new TPaveText(0.20, 0.81, 0.37, 0.92, "NDC");
+    // SetTPaveTxt(tx7, 20);
+    // tx7->AddText(Form("%d-%d%%",(int)centbins[setcent],(int)centbins[setcent+1]));
+    // tx7->AddText("|#eta| < 2.4");
+    // tx7->Draw();
+    // TLegend * leg7 = new TLegend(0.36, 0.80, 0.64, 0.93);
+    // SetLegend(leg7, 20);
+    // leg7->AddEntry(data_v1_pT_eta_0_24_av[setcent],"N1SUB2 PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
+    // leg7->AddEntry(data_v1_pT_112_0_24[setcent],"N112ASUB2 PbPb #sqrt{s_{NN}} = 5.02 TeV","p");
+    // leg7->AddEntry(hSTAR_pT_0_5,"AuAu #sqrt{s_{NN}} = 200 GeV (5-40%)","p");
+    // leg7->AddEntry(v1_pT_eta_0_24_av[setcent],"AMPT PbPb #sqrt{s_{NN}} = 5.02 TeV","lp");
+    // leg7->Draw();
+    // c7->Print(Form("figures/ampt/compare_PbPb_mix_pT_%d_%d.png",(int)centbins[setcent],(int)centbins[setcent+1]),"png");
 
 }
