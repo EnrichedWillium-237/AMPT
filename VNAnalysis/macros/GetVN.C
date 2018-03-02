@@ -64,6 +64,12 @@ TH1D * npartIN;
 TH1D * ncollIN;
 TH2D * multvsb;
 
+TH1D * ptx;
+TH1D * pty;
+TH1D * ptxsum;
+TH1D * ptysum;
+TH2D * ptxysum;
+
 TH1D * hcent;
 double ccutlow[NCbins];
 TH2D * v1true2D[NCbins];
@@ -107,6 +113,12 @@ void GetVN()
         v2true2D[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("v2true_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
         qcnt[cbin] = (TH2D *) v1true2D[cbin]->Clone(Form("qcnt_%d_%d",cminCENT[cbin],cmaxCENT[cbin]));
     }
+    ptx = new TH1D("ptx", "", 100, -6, 6);
+    pty = new TH1D("pty", "", 100, -6, 6);
+    ptxsum = new TH1D("ptxsum", "", 100, -24, 24);
+    ptysum = new TH1D("ptysum", "", 100, -24, 24);
+    ptxysum = new TH2D("ptxysum", "", 50, -24, 24, 50, -24, 24);
+    ptxysum->SetOption("colz");
 
     cout << "Retrieving centrality values... " << endl;
     // fcent = new TFile("hists/Cent.root","read");
@@ -124,8 +136,8 @@ void GetVN()
     tree0->SetMakeClass(1);
     tree1 = (TTree *) fin->Get("QWHepMCMaker/trV");
 
-    int nevents = tree1->GetEntries();
-    // int nevents = 1e6;
+    // int nevents = tree1->GetEntries();
+    int nevents = 1e5;
 
     tree1->SetMakeClass(1);
     tree0->AddFriend(tree1);
@@ -173,6 +185,8 @@ void GetVN()
         int cbin = hcent->GetXaxis()->FindBin(b)-1;
         if (cbin>=NCbins) {continue;}
         // cout<<"b: "<<b<<"\tcbin: "<<cbin<<endl;
+        double ptxsum_ = 0;
+        double ptysum_ = 0;
         for ( unsigned int i = 0; i<phi->size(); i++ ) {
             double phi_ = bounds(1, (*phi)[i]);
             double eta_ = (*eta)[i];
@@ -180,6 +194,10 @@ void GetVN()
             phiIN->Fill( phi_ );
             etaIN->Fill( eta_ );
             ptIN->Fill( pt_ );
+            ptx->Fill( pt_*TMath::Cos(phi_) );
+            pty->Fill( pt_*TMath::Sin(phi_) );
+            ptxsum_+=pt_*TMath::Cos(phi_);
+            ptysum_+=pt_*TMath::Sin(phi_);
 
             if (eta_<=-2.4 || eta_>2.4) continue;
             int ebin = v1true2D[0]->GetYaxis()->FindBin(eta_)-1;
@@ -191,6 +209,11 @@ void GetVN()
             c22[cbin][pbin][ebin] += pow(TMath::Cos(2*(phi_ - PsiRP)),2);
             cnt[cbin][pbin][ebin] += 1.;
         }
+        ptxsum->Fill(ptxsum_);
+        ptysum->Fill(ptysum_);
+        ptxysum->Fill(ptxsum_, ptysum_);
+        ptxsum_ = 0;
+        ptysum_ = 0;
     }
 
     for (int cbin = 0; cbin<hcent->GetNbinsX(); cbin++) {
@@ -219,8 +242,8 @@ void GetVN()
         }
     }
 
-    // fout = new TFile("hists/amptVN.root","recreate");
-    fout = new TFile("hists/amptVN_5_40_80.root","recreate");
+    fout = new TFile("hists/amptVN.root","recreate");
+    // fout = new TFile("hists/amptVN_5_40_80.root","recreate");
     fout->cd();
     phiIN->Write();
     etaIN->Write();
@@ -238,7 +261,12 @@ void GetVN()
         v2true2D[cbin]->Write();
         qcnt[cbin]->Write();
     }
-
+    fout->cd();
+    ptx->Write();
+    pty->Write();
+    ptxsum->Write();
+    ptysum->Write();
+    ptxysum->Write();
 
     TCanvas * cinputs = new TCanvas("cinputs","cinputs",1200,600);
     cinputs->Divide(4,2);
@@ -271,7 +299,50 @@ void GetVN()
     multvsb->SetYTitle("Multiplicity");
     multvsb->Draw();
     cinputs->Print("figures/AMPT_inputs.png","png");
-    fout->cd(); cinputs->Write();
+    cinputs->Write();
+
+
+    TCanvas * cpt = new TCanvas("cpt", "cpt", 650, 600);
+    cpt->Divide(2,2);
+    cpt->cd(1);
+    ptx->SetXTitle("p_{T}cos(#phi) (GeV/c)");
+    ptx->Draw();
+    cpt->cd(2);
+    pty->SetXTitle("p_{T}sin(#phi) (GeV/c)");
+    pty->Draw();
+    TPad * padpt3 = (TPad *) cpt->cd(3);
+    padpt3->SetLogy();
+    ptIN->Draw();
+    cpt->cd(4);
+    TPaveText * txpt4 = new TPaveText(0.11, 0.29, 0.51, 0.81, "NDC");
+    SetTPaveTxt(txpt4, 20);
+    txpt4->AddText(Form("Events: %d",nevents));
+    txpt4->AddText(Form("<p_{T}cos(#phi)>: %1.4f #pm %1.4f",ptx->GetMean(),ptx->GetMeanError()));
+    txpt4->AddText(Form("<p_{T}sin(#phi)>: %1.4f #pm %1.4f",pty->GetMean(),pty->GetMeanError()));
+    txpt4->Draw();
+    cpt->Write();
+
+
+    TCanvas * cptsum = new TCanvas("cptsum", "cptsum", 650, 600);
+    cptsum->Divide(2,2);
+    cptsum->cd(1);
+    ptxsum->SetXTitle("#Sigmap_{T}cos(#phi) (GeV/c) per event");
+    ptxsum->Draw();
+    cptsum->cd(2);
+    ptysum->SetXTitle("#Sigmap_{T}sin(#phi) (GeV/c) per event");
+    ptysum->Draw();
+    cptsum->cd(3);
+    ptxysum->SetXTitle("#Sigmap_{T}cos(#phi) per event");
+    ptxysum->SetYTitle("#Sigmap_{T}sin(#phi) per event");
+    ptxysum->Draw();
+    cptsum->cd(4);
+    TPaveText * txptsum4 = new TPaveText(0.11, 0.29, 0.51, 0.81, "NDC");
+    SetTPaveTxt(txptsum4, 20);
+    txptsum4->AddText(Form("Events: %d",nevents));
+    txptsum4->AddText(Form("#Sigmap_{T}cos(#phi): %1.4f #pm %1.4f",ptxsum->GetMean(),ptxsum->GetMeanError()));
+    txptsum4->AddText(Form("#Sigmap_{T}sin(#phi): %1.4f #pm %1.4f",ptysum->GetMean(),ptysum->GetMeanError()));
+    txptsum4->Draw();
+    cptsum->Write();
 
     fout->Close();
 
